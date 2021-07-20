@@ -9,8 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#Introduction: The executive leadership has identified predicting employee turnover as its first application of data science for talent management. 
+
+
 ```{r}
 library(tidyverse)
+library(GGally)
 
 ```
 
@@ -18,9 +22,18 @@ library(tidyverse)
 
 employeeData = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2-data.csv")
 
+view(employeeData)
 ```
 
+#Exploraty Data Analysis(EDA)
+
 ```{r}
+
+summary(employeeData)
+
+# Review the data to see if there are any NA observed in the data set.
+na.fail(employeeData)
+
 
 ```
 
