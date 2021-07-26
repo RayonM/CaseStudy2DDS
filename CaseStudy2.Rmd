@@ -3,6 +3,8 @@ title: "CaseStudy2"
 author: "Rayon M"
 date: "7/19/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -15,6 +17,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(GGally)
+library(naniar)
+library(dplyr)
+library(class)
+library(caret)
+library(e1071)
+library(ggplot2)
+library(plotly)
 
 ```
 
@@ -29,13 +38,734 @@ view(employeeData)
 
 ```{r}
 
-summary(employeeData)
+# Look at the structure of the data
+str(employeeData)
 
 # Review the data to see if there are any NA observed in the data set.
-na.fail(employeeData)
+gg_miss_var(employeeData)
+
+# The data set did not have any missing values!
+
+#sapply(employeeData, function(x) sum(is.na(x)))
 
 
 ```
+
+#observations
+#"Years at Company" and "Years in Current Role" has a high yes attrition correlation value 0.822
+#"Years at Company" and "Years Since last promotion" has a high yes attrition correlation value 0.755
+#"Years at Company" and "Years with current manager" has a high yes attrition correlation value 0.768
+#"Years in current role" and "Years Since last promotion" has a high yes attrition correlation value 0.667
+#"Years in current role" and "Years with current manager" has a high yes attrition correlation value 0.811
+
+
+
+```{r}
+
+#Lets look do an EDA on each of the variables in the data set. 
+
+employeeData %>% 
+  ggplot(mapping = aes(x= JobSatisfaction))+
+  geom_histogram(binwidth = 0.5)
+
+employeeData %>% 
+  ggplot(mapping = aes(y= JobSatisfaction))+
+  geom_boxplot()
+## Median of Job Satisfaction is 3
+
+employeeData %>% 
+  ggplot(mapping = aes(x= Education, color = Attrition))+
+  geom_boxplot()
+
+# Median of Education is 3.. range is 2, also it's the same for both Yes and No attrition
+
+employeeData %>% 
+  ggplot(mapping = aes(y= DailyRate))+
+  geom_boxplot()
+# Median of Daily rate is 800
+
+employeeData %>% 
+  group_by(Attrition) %>% 
+  summarise(mean =  mean (DailyRate), sd = sd(DailyRate), median = median(DailyRate), range = max(DailyRate) -min(DailyRate), IQR = IQR(DailyRate), count = n())
+
+
+(totals = count(employeeData, Attrition))
+
+
+employeeData %>% 
+  ggplot(mapping = aes(y= EmployeeCount))+
+  geom_boxplot()
+#Employee Count doesn't mean anything
+
+
+
+employeeData %>% 
+  ggplot(mapping = aes(x= Department))+
+  geom_bar()
+
+(totals = count(employeeData, Department))
+
+totals %>% ggplot(mapping = aes(x = Department, y = n)) +
+  geom_bar(stat = "identity")
+
+# There are 3 departments
+
+
+employeeData %>% ggplot (mapping = aes(x = DistanceFromHome,color = Attrition )) +
+  geom_bar(position = "dodge")
+#doesn't seem to be a strong relationship between Distance From Home and Attrition
+
+
+employeeData %>% count(DistanceFromHome)
+
+
+
+ggplot(data = employeeData) +
+  geom_tile(mapping = aes(x = Department, y = BusinessTravel, fill = Attrition))
+
+# People with technical Degrees in the Research and Sales department had attrition
+
+employeeData %>% select(Attrition, JobSatisfaction, EducationField ) %>% ggpairs(aes(color = employeeData$Attrition))
+
+  
+employeeData %>% ggplot(mapping = aes(x = JobSatisfaction, y = EducationField, color = Attrition)) +
+  geom_boxplot() +
+  coord_flip()
+
+# The median job satisfaction score of people who stay within Human Resources is 3.
+# The median job satisfaction score of people who leave within Human Resources is 1.5
+
+
+employeeData %>% ggplot(mapping = aes(x = JobLevel, y = JobSatisfaction, color = Attrition)) +
+  geom_point(position = "jitter")
+
+
+employeeData %>% ggplot(mapping = aes(x = EnvironmentSatisfaction, y = JobSatisfaction, color = Attrition)) +
+  geom_point(position = "jitter")
+
+
+#Monthly Income
+ggplot(data = employeeData, mapping = aes(x = MonthlyIncome, ..density..))+ 
+  geom_freqpoly(mapping = aes(color = Attrition), binwidth = 50)
+
+#DailyRate
+ggplot(data = employeeData, mapping = aes(x = DailyRate, ..density..))+ 
+  geom_freqpoly(mapping = aes(color = Attrition), binwidth = 50)
+
+
+#MonthlyRate
+ggplot(data = employeeData, mapping = aes(x = MonthlyRate, ..density..))+ 
+  geom_freqpoly(mapping = aes(color = Attrition), binwidth = 50)
+
+
+employeeData %>% select (MonthlyIncome, MonthlyRate, DailyRate) %>% ggpairs(aes(color = employeeData$Attrition))
+
+
+employeeData %>% 
+  ggplot(mapping = aes(x = Attrition, y= DailyRate))+
+  geom_boxplot(employeeData, mapping = aes(color = Attrition))
+
+
+employeeData %>% select(Attrition, DistanceFromHome, MaritalStatus ) %>% ggpairs()
+
+employeeData %>% select (WorkLifeBalance, YearsAtCompany, YearsInCurrentRole, YearsSinceLastPromotion, YearsWithCurrManager) %>% ggpairs(aes(color = employeeData$Attrition))
+
+
+
+```
+
+#KNN Model
+
+```{r}
+
+set.seed (6)
+splitPerc = 0.70
+
+trainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
+train = employeeData[trainIndices,]
+test = employeeData[-trainIndices,]
+
+classifications = knn(train[,c(20, 16,34)],test[,c(20, 16,34)],train$Attrition, prob = TRUE, k = 10)
+table(classifications,test$Attrition)
+confusionMatrix(table(classifications,test$Attrition))
+
+
+```
+
+#NaiveBayes Model
+
+
+```{r}
+
+set.seed (6)
+splitPerc = 0.75
+
+trainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
+(train = employeeData[trainIndices,])
+test = employeeData[-trainIndices,]
+
+model = naiveBayes(train[,c(20,34,16)],train$Attrition)
+table(predict(model,test[,c(20,34,16)]),test$Attrition)
+confusionMatrix(table(predict(model,test[,c(20,34,16)]),test$Attrition))
+
+
+```
+
+
+#GGPAIRS
+
+```{r}
+
+employeeData %>% 
+  select (Attrition, YearsInCurrentRole, YearsSinceLastPromotion, YearsWithCurrManager) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+# Attrition looks to have the lowest median in the "Years in current role" variable and No Attrition have the highest, why?
+# Attrition looks to have the lowest median in the "Years with Current Manager" and No Attrition have the highest, why?
+# Attrition has a high correlation with "Years In current role" and Years with current manager? why? Overall the Correlation is 0.709 (Strong)
+# Attrition has a medium correlation with "Years In current role" and Years since Last Promotion? why?
+
+ggplot(data = employeeData, mapping = aes(x = YearsInCurrentRole, ..density..)) + 
+  geom_freqpoly(mapping = aes(color = Attrition),binwidth = 1)
+
+# The lower the "Years In Current Role" variable the more likely there is attrition -- which makes sense because people left before spending a long time. What else is driving them to leave?
+
+ggplot(data = employeeData, mapping = aes(x = YearsInCurrentRole, y = YearsAtCompany)) +
+  geom_point(position = "jitter")
+
+
+employeeData %>% select(YearsAtCompany, YearsInCurrentRole) %>% 
+  ggpairs(employeeData, mapping = aes(color = Attrition))
+ 
+
+employeeData %>% 
+  select (Attrition,TrainingTimesLastYear, WorkLifeBalance, YearsAtCompany, YearsInCurrentRole) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+# Years At Company and Years In current Role has a high correlation of 0.776; however, that's normally, as you need to be in the company to change roles. And the longer you stay the more likely.
+
+employeeData %>% 
+  select (Attrition, RelationshipSatisfaction, StandardHours, StockOptionLevel, TotalWorkingYears) %>% 
+  ggpairs(mapping = aes(color = Attrition))
+
+employeeData %>%
+ select(Attrition, Over18, OverTime, PercentSalaryHike,PerformanceRating) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+#High correlation between Percent Salary Hike and Performance Rating - makes sense.
+
+employeeData %>% select( Attrition,
+  JobSatisfaction         
+ ,MaritalStatus           
+ ,MonthlyIncome           
+ ,MonthlyRate
+ ,NumCompaniesWorked) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+# Attrition folks have a lower monthly income
+
+employeeData %>% select(
+  Attrition
+,Gender
+,HourlyRate
+,JobInvolvement          
+,JobLevel                
+,JobRole) %>%
+  ggpairs(mapping = aes(color = Gender))
+
+#The median job involvement for males were lowere than females
+
+employeeData %>% select(
+  Attrition
+,Education               
+ ,EducationField          
+ ,EmployeeCount           
+ ,EmployeeNumber          
+ ,EnvironmentSatisfaction 
+) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+
+employeeData %>% select(
+ Attrition               
+ ,BusinessTravel          
+ ,DailyRate               
+ ,Department              
+ ,DistanceFromHome        
+
+) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+#Business Travel has a lower Median for Attrition than non Attrition
+#one department is seeing a high turnover 
+
+
+ggplot(employeeData, mapping = aes(x=BusinessTravel)) +
+  geom_bar(mapping =aes(color = Attrition), position = "dodge")
+
+#Non-Travel, Travel_Frequently, Travel_rarely
+
+ggplot(employeeData, mapping = aes(x=BusinessTravel, y = DistanceFromHome)) +
+  geom_boxplot(mapping =aes(color = Attrition))
+# people who work on average a further distance from home and don't travel have a high attrition!
+
+
+ggplot(employeeData, mapping = aes(x=BusinessTravel, y = Department)) +
+  geom_tile(mapping =aes())+
+  coord_flip()
+
+employeeData %>% 
+  count(BusinessTravel, Department) %>%
+  ggplot(mapping = aes(x = BusinessTravel, y = Department)) +
+  geom_tile(mapping = aes(fill = n))
+
+
+```
+
+
+
+# Categorical Variables
+
+```{r}
+# Attrition               
+# BusinessTravel          
+# Department          
+# EducationField         
+# Gender
+# JobRole           
+# MaritalStatus
+# Over18                
+# OverTime
+
+```
+
+# Attrition               
+
+```{r}
+ggplot(data = employeeData) +
+    geom_bar(mapping = aes(x = Attrition, fill = Attrition))
+# Attrition is mostly no in the data set. Heavily unbalanced towards no.
+
+employeeData %>% count(Attrition)
+
+#  Attrition   n
+# 1        No 730
+# 2       Yes 140
+
+```
+
+# BusinessTravel          
+
+```{r}
+ggplot(data = employeeData) +
+  geom_bar(mapping = aes(x = BusinessTravel, fill = Attrition), position ="dodge")+
+  facet_wrap(~Attrition)
+
+#What is the correlation between Business Travel and Attrition?
+
+employeeData %>% select(Attrition, BusinessTravel) %>% ggpairs()
+
+ggplot(data = employeeData) +
+  geom_count(mapping = aes(x = BusinessTravel, y= Attrition), position ="dodge")
+
+p = employeeData %>% count(Attrition, BusinessTravel) %>% 
+  ggplot(mapping = aes(x= BusinessTravel, y = Attrition))+
+  geom_tile(mapping = aes(fill = n))
+ 
+ggplotly(p)
+
+employeeData %>% filter(Attrition == "Yes") %>% count(BusinessTravel)
+#      BusinessTravel  n
+# 1        Non-Travel 11
+# 2 Travel_Frequently 35
+# 3     Travel_Rarely 94
+
+# Conclusion: Business Travel does not affect Attrition. I would've expected to see more in the Attrition field if that was the case for Travel Frequently.
+
+
+```
+
+# Department          
+
+```{r}
+ggplot(data = employeeData) +
+  geom_bar(mapping = aes(x = Department, fill = Attrition), position ="dodge")
+
+```
+
+# EducationField         
+
+
+```{r}
+ggplot(data = employeeData) +
+  geom_bar(mapping = aes(x = EducationField, fill = Attrition), position ="dodge")
+
+```
+
+# Gender
+
+
+```{r}
+ggplot(data = employeeData) +
+  geom_bar(mapping = aes(x = Gender, fill = Attrition), position ="dodge")
+
+```
+
+# JobRole           
+
+```{r}
+ggplot(data = employeeData) +
+  geom_bar(mapping = aes(x = JobRole, fill = Attrition), position ="dodge")
+
+```
+
+# MaritalStatus
+
+```{r}
+ggplot(data = employeeData) +
+  geom_bar(mapping = aes(x = MaritalStatus, fill = Attrition), position = "dodge")
+employeeData %>% count(MaritalStatus)
+
+```
+
+# Over18                
+
+```{r}
+ggplot(data = employeeData) +
+  geom_bar(mapping = aes(x = Over18, fill = Attrition), position ="dodge")
+
+employeeData %>% count(Over18) #All employees are over the age of 18
+
+```
+
+# OverTime
+
+```{r}
+ggplot(data = employeeData) +
+  geom_bar(mapping = aes(x = OverTime))
+
+employeeData %>% count(OverTime)
+
+```
+
+
+
+# Continuous Variables
+
+
+```{r}
+
+ # $ Age                     
+ # $ DailyRate               
+ # $ DistanceFromHome        
+ # $ Education               
+ # $ EmployeeCount           
+ # $ EmployeeNumber #skipped          
+ # $ EnvironmentSatisfaction 
+ # $ HourlyRate              
+ # $ JobInvolvement          
+ # $ JobLevel                
+ # $ JobSatisfaction         
+ # $ MonthlyIncome           
+ # $ MonthlyRate             
+ # $ NumCompaniesWorked      
+ # $ PercentSalaryHike       
+ # $ PerformanceRating       
+ # $ RelationshipSatisfaction
+ # $ StandardHours           
+ # $ StockOptionLevel        
+ # $ TotalWorkingYears       
+ # $ TrainingTimesLastYear   
+ # $ WorkLifeBalance         
+ # $ YearsAtCompany          
+ # $ YearsInCurrentRole      
+ # $ YearsSinceLastPromotion 
+ # $ YearsWithCurrManager    
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = Age), binwidth = 0.5)
+
+employeeData %>% 
+  count(cut_width(Age, 1))
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = DailyRate), binwidth = 15)
+
+employeeData %>% 
+  count(cut_width(DailyRate, 1))
+
+```{r}
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x =  DistanceFromHome, fill = DistanceFromHome))
+
+employeeData %>% 
+  count(cut_width(DistanceFromHome, 1))
+
+# Mode around 1.5 to 2.5 has about 133 values included
+```
+
+```{r}
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x =  Education ))
+
+# Ranges from 1 to 5
+
+
+# ggplot(data = employeeData) +
+#   geom_histogram(mapping = aes(x =  EmployeeCount )) # Doesn't do anything
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x =  EnvironmentSatisfaction  ))
+
+# Ranges from 1 to 4
+
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = HourlyRate ))
+
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = JobInvolvement))
+# Ranges from 1 to 4
+
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = JobLevel))
+
+# Ranges from 1 to 5
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = MonthlyIncome ))
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = MonthlyRate))
+
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = NumCompaniesWorked ))
+
+```
+
+#Performance Rating
+
+```{r}
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = PerformanceRating))+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(employeeData$Attrition == "Yes") %>%
+  count(cut_width(PerformanceRating, 1))
+
+# Attrition and Non Attrition Employees all receive a rating of 3 or 4.
+# Roughly over 600+ Non Attrition Employees got a rating of 3
+# Roughly over 100+ Non Attrition Employees got a rating of 4 (very small percentage)
+
+# Slightly over 100+ Attrition Employees got a rating of 3
+# Significantly less 50 Attrition Employees got a rating of 4 (very small percentage)
+
+
+```
+
+#PercentSalaryHike 
+Would love to compare this with the Position or title to see the Correlation 
+
+```{r}
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = PercentSalaryHike), binwidth = 0.5)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "No") %>%
+  count(cut_width(PercentSalaryHike, 0.5))
+
+#    cut_width(PercentSalaryHike, 0.5)   n
+# 1                        [10.8,11.2] 126
+# 2                        (11.8,12.2] 119
+# 3                        (12.8,13.2] 123
+# 4                        (13.8,14.2] 120
+# 5                        (14.8,15.2]  54
+# 6                        (15.8,16.2]  43
+# 7                        (16.8,17.2]  56
+# 8                        (17.8,18.2]  57
+# 9                        (18.8,19.2]  40
+# 10                       (19.8,20.2]  27
+# 11                       (20.8,21.2]  33
+# 12                       (21.8,22.2]  30
+# 13                       (22.8,23.2]  17
+# 14                       (23.8,24.2]  14
+# 15                       (24.8,25.2]  11
+
+
+# > employeeData %>% filter(Attrition == "Yes") %>%
+# +   count(cut_width(PercentSalaryHike, 0.5))
+#    cut_width(PercentSalaryHike, 0.5)  n
+# 1                        [10.8,11.2] 24
+# 2                        (11.8,12.2] 17
+# 3                        (12.8,13.2] 21
+# 4                        (13.8,14.2] 13
+# 5                        (14.8,15.2]  8
+# 6                        (15.8,16.2] 10
+# 7                        (16.8,17.2] 10
+# 8                        (17.8,18.2]  9
+# 9                        (18.8,19.2]  5
+# 10                       (19.8,20.2]  3
+# 11                       (20.8,21.2]  2
+# 12                       (21.8,22.2]  7
+# 13                       (22.8,23.2]  5
+# 14                       (23.8,24.2]  5
+# 15                       (24.8,25.2]  1
+
+
+```
+
+
+#RelationshipSatisfaction
+
+```{r}
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = RelationshipSatisfaction), binwidth = 0.1)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(RelationshipSatisfaction, 0.1))
+# 
+# > employeeData %>% filter(Attrition == "Yes") %>%
+# +   count(cut_width(RelationshipSatisfaction, 0.5))
+#   cut_width(RelationshipSatisfaction, 0.5)  n
+# 1                              [0.75,1.25] 35
+# 2                              (1.75,2.25] 27
+# 3                              (2.75,3.25] 36
+# 4                              (3.75,4.25] 42
+
+
+```
+
+
+#StandardHours
+
+```{r}
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = StandardHours), binwidth = 0.1)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(StandardHours, 0.1))
+
+```
+
+
+#StockOptionLevel
+
+```{r}
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = StockOptionLevel), binwidth = 0.1)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(StockOptionLevel, 0.1))
+
+```
+
+
+#TotalWorkingYears
+
+```{r}
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = TotalWorkingYears), binwidth = 0.1)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(TotalWorkingYears, 0.1))
+
+```
+
+#TrainingTimesLastYear
+
+ 
+```{r}
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = TrainingTimesLastYear), binwidth = 0.1)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(TrainingTimesLastYears, 0.1))
+ 
+```
+ 
+#WorkLifeBalance
+ 
+ 
+```{r}
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = WorkLifeBalance ), binwidth = 0.1)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(WorkLifeBalance , 0.1))
+ 
+
+```
+
+#YearsAtCompany
+ 
+```{r}
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = YearsAtCompany), binwidth = 0.1)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(YearsAtCompany , 0.1))
+
+
+```
+
+#YearsInCurrentRole
+
+```{r}
+
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = YearsInCurrentRole), binwidth = 0.1)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(YearsInCurrentRole , 0.1))
+
+
+```
+
+
+
+#YearsSinceLastPromotion
+ 
+ 
+```{r}
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = YearsSinceLastPromotion), binwidth = 0.5)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(YearsSinceLastPromotion , 0.5))
+
+```
+
+#YearsWithCurrManager
+
+
+```{r}
+ggplot(data = employeeData) +
+  geom_histogram(mapping = aes(x = YearsWithCurrManager), binwidth = 0.5)+
+  facet_wrap(~Attrition)
+
+employeeData %>% filter(Attrition == "Yes") %>%
+  count(cut_width(YearsWithCurrManager , 0.5))
+
+```
+
+
 
 
 
