@@ -49,6 +49,8 @@ gg_miss_var(employeeData)
 
 #sapply(employeeData, function(x) sum(is.na(x)))
 
+employeeData$Attrition <-  as.factor(employeeData$Attrition)
+
 
 ```
 
@@ -180,27 +182,39 @@ employeeData %>% select (WorkLifeBalance, YearsAtCompany, YearsInCurrentRole, Ye
 ```{r}
 
 #Monthly Attrition is one variable
-#Overtime is another variable - Cannot work for KNN as it requires numberic values
+#Overtime is another variable - Cannot work for KNN as it requires numeric values
 #Job Satisfaction worked but not good enough. 20,15
 
 set.seed (6)
-splitPerc = 0.70
+splitPerc = 0.50
 
 trainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
 train = employeeData[trainIndices,]
 test = employeeData[-trainIndices,]
 
-classifications = knn(train[,c(36,35,34,33,30,25,20)],test[,c(36,35,34,33,30,25,20)],train$Attrition, prob = TRUE, k = 5)
+# classifications = knn(train[,c(36,35,34,33,30,25,20,2,7)],test[,c(36,35,34,33,30,25,20,2,7)],train$Attrition, prob = TRUE, k = 5)
+# table(test$Attrition,classifications)
+# confusionMatrix(table(test$Attrition,classifications))
+
+
+
+# classifications = knn(train[,c(2,7,16,20,22,29,31,33,34,36)],test[,c(2,7,16,20,22,29,31,33,34,36)],train$Attrition, prob = TRUE, k = 5)
+# table(test$Attrition,classifications)
+# confusionMatrix(table(test$Attrition,classifications))
+
+# classifications = knn(train[,c(15,16,24,32)],test[,c(15,16,24,32)],train$Attrition, k = 5, prob = TRUE)
+# table(test$Attrition,classifications)
+# confusionMatrix(table(test$Attrition,classifications))
+
+# classifications = knn.cv(employeeData[,c(36,35,34,33,30,25,20)],employeeData$Attrition, k = 5)
+# confusionMatrix(employeeData$Attrition,classifications)
+
+
+#knn(train[,c(2,16,24)],test[,c(2,16,24)],train$Attrition, prob = TRUE, k = 3)]
+
+classifications = knn(train[,c("JobInvolvement","WorkLifeBalance","Age",  "JobLevel")],test[,c("JobInvolvement","WorkLifeBalance","Age",  "JobLevel")],train$Attrition, prob = TRUE, k = 5)
 table(test$Attrition,classifications)
 confusionMatrix(table(test$Attrition,classifications))
-
-
-
-classifications = knn.cv(employeeData[,c(36,35,34,33,30,25,20)],employeeData$Attrition, k = 5)
-confusionMatrix(employeeData$Attrition,classifications)
-
-
-
 
 ```
 
@@ -210,17 +224,55 @@ confusionMatrix(employeeData$Attrition,classifications)
 ```{r}
 
 set.seed (6)
-splitPerc = 0.50
+splitPerc = 0.70
 
 trainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
 train = employeeData[trainIndices,]
 test = employeeData[-trainIndices,]
 
-model = naiveBayes(train[,c(36,35,34,33,30,25,20)],train$Attrition)
-table(predict(model,test[,c(36,35,34,33,30,25,20)]),test$Attrition)
-confusionMatrix(table(predict(model,test[,c(36,35,34,33,30,25,20)]),test$Attrition))
+# model = naiveBayes(train[,c(2,7,16,20,22,29,31,33,34,36)],train$Attrition)
+# table(predict(model,test[,c(2,7,16,20,22,29,31,33,34,36)]),test$Attrition)
+# confusionMatrix(table(predict(model,test[,c(2,7,16,20,22,29,31,33,34,36)]),test$Attrition))
 
 
+# model = naiveBayes(train[,c(15,16,24,32)],train$Attrition)
+# table(predict(model,test[,c(15,16,24,32)]),test$Attrition)
+# confusionMatrix(table(predict(model,test[,c(15,16,24,32)]),test$Attrition))
+
+# model = naiveBayes(train[,c(15,16,24,32)],train$Attrition)
+# table(predict(model,test[,c(15,16,24,32)]),test$Attrition)
+# confusionMatrix(table(predict(model,test[,c(15,16,24,32)]),test$Attrition))
+
+
+
+#trainIndices = sample(seq(1:length(data$ID)), round(.7 * length(data$ID)))
+#train = data[trainIndices,]
+#test = data[-trainIndices,]
+#model = naiveBayes(train[,c("JobInvolvement","WorkLifeBalance","OverTime","Age",  "JobLevel")],
+                   #train$Attrition,
+#CM = confusionMatrix(table(test$Attrition,labels = c("No","Yes")),
+                           #predict(model,test[,c("JobInvolvement","WorkLifeBalance","OverTime","Age", "JobLevel")])))
+#CM
+
+
+
+#trainIndices = sample(seq(1:length(data$ID)), round(.7 * length(data$ID)))
+#train = data[trainIndices,]
+#test = data[-trainIndices,]
+
+model = naiveBayes(train[,c("OverTime","Age",  "JobLevel")],train$Attrition)
+CM = confusionMatrix(table(test$Attrition,predict(model,test[,c("OverTime","Age", "JobLevel")])))
+CM
+
+
+
+# model = navieBayes(train[,c("Age", "DistanceFromHome",  "JobLevel", "MonthlyIncome", "TrainingTimesLastYear", "YearsAtCompany", "YearsInCurrentRole", "YearsWithCurrManager")], train$Attrition)
+# CM = confusionMatrix(table(test$Attrition, predict(model,test[,c("Age", "DistanceFromHome",  "JobLevel", "MonthlyIncome", "TrainingTimesLastYear", "YearsAtCompany", "YearsInCurrentRole", "YearsWithCurrManager")])))
+
+  CM                   
+
+
+# "NumCompaniesWorked", "StockOptionLevel"
 ```
 
 
@@ -596,7 +648,6 @@ ggplot(data = employeeData) +
 employeeData %>% 
   count(cut_width(DailyRate, 1))
 
-
 ```{r}
 
 ggplot(data = employeeData) +
@@ -869,13 +920,14 @@ employeeData %>% filter(Attrition == "Yes") %>%
 ```
 
 ```{r}
- $ MonthlyIncome           
- $ PercentSalaryHike       
- $ TotalWorkingYears       
- $ YearsAtCompany          
- $ YearsInCurrentRole      
- $ YearsSinceLastPromotion 
- $ YearsWithCurrManager    
+
+ # $ MonthlyIncome           
+ # $ PercentSalaryHike       
+ # $ TotalWorkingYears       
+ # $ YearsAtCompany          
+ # $ YearsInCurrentRole      
+ # $ YearsSinceLastPromotion 
+ # $ YearsWithCurrManager    
 
 employeeData %>% select(Attrition, MonthlyIncome,PercentSalaryHike, TotalWorkingYears,YearsAtCompany,YearsInCurrentRole,YearsSinceLastPromotion ,YearsWithCurrManager)%>%
   ggpairs(mapping = aes(color = Attrition))
@@ -883,42 +935,58 @@ employeeData %>% select(Attrition, MonthlyIncome,PercentSalaryHike, TotalWorking
 employeeData %>% 
 select(Attrition                     
  ,Age                     
- ,DailyRate               
- ,DistanceFromHome        
- ,Education               
- ,EmployeeCount           
- ,EmployeeNumber) %>%
-  ggpairs(mapping = aes(color = Attrition))
- 
- ,EnvironmentSatisfaction 
- ,HourlyRate              
- ,JobInvolvement          
- ,JobLevel                
- ,JobSatisfaction         
- ,MonthlyIncome           
- ,MonthlyRate             
- ,NumCompaniesWorked      
- ,PercentSalaryHike       
- ,PerformanceRating       
- ,RelationshipSatisfaction
- ,StandardHours           
- ,StockOptionLevel        
- ,TotalWorkingYears       
- ,TrainingTimesLastYear   
- ,WorkLifeBalance         
+ ,DistanceFromHome
+ ,JobLevel
+ ,MonthlyIncome
+ ,NumCompaniesWorked
+ ,StockOptionLevel #iffy
+ ,TrainingTimesLastYear
  ,YearsAtCompany          
  ,YearsInCurrentRole      
- ,YearsSinceLastPromotion 
- ,YearsWithCurrManager    
+ ,YearsWithCurrManager 
+ ) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+employeeData %>%
+  select(Attrition, JobInvolvement,WorkLifeBalance,OverTime, Age,  JobLevel) %>%
+  ggpairs(mapping = aes(color = Attrition))
 
 
+employeeData %>%
+  group_by(Attrition)%>%
+  summarise(median = median(Age))
+#  Attrition median
+#   <chr>      <dbl>
+# 1 No            36
+# 2 Yes           32
+
+log-log transformation
+employeeData %>%
+  mutate (lcarat = log(carat), lprice = log(price))%>%
+  ggplot(aes(x = lcarat, y = lprice))+
+  geom_point()
 
 ```
 
 
 ```{r}
 # Those that left the company were on average younger that those that stayed. (AGE)
-#Those that left the company lived far away from the company on average than those that stay(DistanceFromHome) 
+# Those that left the company lived far away from the company on average than those that stay(DistanceFromHome)
+# Job level was significantly lower for those left than those that stayed.
+## Hourly rate of those that left were higher on Average.
+# The Monthly Income of those that left the company were lower than those that stayed on average.
+# Job level had a high correlation with Monthly Income of (0.952)
+# Monthly income and Age correlated at about 50%
+# JobLevel and Age correlated at about 50%
+# Those Employees that left the company had  worked at fever companies on average than those that stayed.
+# THose that that left the company had a lower stock option level on average.
+# The employees that left the company had a lower Total# of working years than those that stayed. TotalWorking Years had a strong correlation with Age, joblevel, MonthlyIncome.
+# Those that left the company had fewer training on average in the last year than those that stayed.
+#Those that left the company had fewer years at the company on average than those that stayed.
+#Those that left the company had fewer years in the current role on average than those that stayed.
+#Those that left the company had fewer years with the current manager on average than those that stayed.
+
+
 
 ```
 
