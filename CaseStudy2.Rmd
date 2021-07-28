@@ -180,6 +180,7 @@ employeeData %>% select (WorkLifeBalance, YearsAtCompany, YearsInCurrentRole, Ye
 #KNN Model - K = 15
 
 ```{r}
+STANDARDIZE YOUR VARIABLES!!!
 
 #Monthly Attrition is one variable
 #Overtime is another variable - Cannot work for KNN as it requires numeric values
@@ -347,6 +348,9 @@ Test = employeeData[-trainIndices,]
 model = naiveBayes(train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")], train$Attrition)
 CM = confusionMatrix(table(test$Attrition, predict(model,test[,c("Age",  "JobLevel", "MonthlyIncome", "OverTime")])))
 CM
+
+#Conclusion: My Explanatory Variables/Features are: Age, JobLevel, Monthly Income, and Overtime!
+
 
 
 # "NumCompaniesWorked", "StockOptionLevel"
