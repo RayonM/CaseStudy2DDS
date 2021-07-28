@@ -292,15 +292,12 @@ plot(seq(1,numks, 1),MeanAcc, type = "l")
 
 
 
-
-```
-
 #NaiveBayes Model
 
 
 ```{r}
 
-set.seed (6)
+#set.seed (0)
 splitPerc = 0.70
 
 TrainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
@@ -337,16 +334,19 @@ Test = employeeData[-trainIndices,]
 #train = data[trainIndices,]
 #test = data[-trainIndices,]
 
-model = naiveBayes(Train[,c("OverTime","Age",  "JobLevel")],Train$Attrition)
-CM = confusionMatrix(table(Test$Attrition,predict(model,Test[,c("OverTime","Age", "JobLevel")])))
-CM
+# model = naiveBayes(Train[,c("OverTime","Age",  "JobLevel")],Train$Attrition)
+# CM = confusionMatrix(table(Test$Attrition,predict(model,Test[,c("OverTime","Age", "JobLevel")])))
+# CM
 
 
 
 # model = navieBayes(train[,c("Age", "DistanceFromHome",  "JobLevel", "MonthlyIncome", "TrainingTimesLastYear", "YearsAtCompany", "YearsInCurrentRole", "YearsWithCurrManager")], train$Attrition)
 # CM = confusionMatrix(table(test$Attrition, predict(model,test[,c("Age", "DistanceFromHome",  "JobLevel", "MonthlyIncome", "TrainingTimesLastYear", "YearsAtCompany", "YearsInCurrentRole", "YearsWithCurrManager")])))
+# CM
 
-  CM                   
+model = naiveBayes(train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")], train$Attrition)
+CM = confusionMatrix(table(test$Attrition, predict(model,test[,c("Age",  "JobLevel", "MonthlyIncome", "OverTime")])))
+CM
 
 
 # "NumCompaniesWorked", "StockOptionLevel"
