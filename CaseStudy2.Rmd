@@ -180,7 +180,12 @@ employeeData %>% select (WorkLifeBalance, YearsAtCompany, YearsInCurrentRole, Ye
 #KNN Model - K = 15
 
 ```{r}
-STANDARDIZE YOUR VARIABLES!!!
+##STANDARDIZE YOUR VARIABLES!!!
+
+employeeDataZ = data.frame(AgeZ = scale(employeeData$Age), DistanceFromHomeZ = scale(employeeData$DistanceFromHome), JoblevelZ = scale(employeeData$JobLevel), MonthlyIncomeZ = scale(employeeData$MonthlyIncome), NumCompaniesWoredZ = scale(employeeData$NumCompaniesWorked), StockOptionLevelZ = scale(employeeData$StockOptionLevel), TrainingTimesLastYearZ = scale(employeeData$TrainingTimesLastYear), YearsAtCompanyZ = scale(employeeData$YearsAtCompany), YearsInCurrentRoleZ = scale(employeeData$YearsInCurrentRole), YearsWithCurrentManager = scale(employeeData$YearsWithCurrManager), Attrition = employeeData$Attrition)
+
+dim(employeeDataZ)
+
 
 #Monthly Attrition is one variable
 #Overtime is another variable - Cannot work for KNN as it requires numeric values
@@ -189,19 +194,23 @@ STANDARDIZE YOUR VARIABLES!!!
 #set.seed (9)
 splitPerc = 0.70
 
-trainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
-train = employeeData[trainIndices,]
-test = employeeData[-trainIndices,]
+trainIndices = sample(1:dim(employeeDataZ)[1],round(splitPerc * dim(employeeDataZ)[1]))
+train = employeeDataZ[trainIndices,]
+test = employeeDataZ[-trainIndices,]
+
+
+classifications = knn(train[,c(1,2,3,4,5,6,7,8,9,10)],test[,c(1,2,3,4,5,6,7,8,9,10)],train$Attrition, prob = TRUE, k = 12)
+table(test$Attrition,classifications)
+confusionMatrix(table(test$Attrition,classifications))
 
 # classifications = knn(train[,c(36,35,34,33,30,25,20,2,7)],test[,c(36,35,34,33,30,25,20,2,7)],train$Attrition, prob = TRUE, k = 20)
 # table(test$Attrition,classifications)
 # confusionMatrix(table(test$Attrition,classifications))
 
 
-
-classifications = knn(train[,c(2,7,16,20,22,29,31,33,34,36)],test[,c(2,7,16,20,22,29,31,33,34,36)],train$Attrition, prob = TRUE, k = 20)
-table(test$Attrition,classifications)
-confusionMatrix(table(test$Attrition,classifications))
+# classifications = knn(train[,c(2,7,16,20,22,29,31,33,34,36)],test[,c(2,7,16,20,22,29,31,33,34,36)],train$Attrition, prob = TRUE, k = 20)
+# table(test$Attrition,classifications)
+# confusionMatrix(table(test$Attrition,classifications))
 
 # classifications = knn(train[,c(15,16,24,32)],test[,c(15,16,24,32)],train$Attrition, k = 5, prob = TRUE)
 # table(test$Attrition,classifications)
@@ -222,9 +231,9 @@ confusionMatrix(table(test$Attrition,classifications))
 #Internal CV/ Leave One Out
 
 ```{r}
-# classifications = knn.cv(employeeData[,c(2,7,16,20,22,29,31,33,34,36)],employeeData$Attrition, prob = TRUE, k = 20)
-# table(employeeData$Attrition,classifications)
-# confusionMatrix(table(employeeData$Attrition,classifications))
+classifications = knn.cv(employeeData[,c(2,7,16,20,22,29,31,33,34,36)],employeeData$Attrition, prob = TRUE, k = 20)
+table(employeeData$Attrition,classifications)
+confusionMatrix(table(employeeData$Attrition,classifications))
 
 
 # classifications = knn.cv(employeeData[,c(36,35,34,33,30,25,20,2,7)],employeeData$Attrition, prob = TRUE, k = 20)
@@ -232,12 +241,76 @@ confusionMatrix(table(test$Attrition,classifications))
 # confusionMatrix(table(employeeData$Attrition,classifications))
 
 
-classifications = knn.cv(employeeData[,c("JobInvolvement","WorkLifeBalance","Age",  "JobLevel")], employeeData$Attrition, prob = TRUE, k = 15)
-table(employeeData$Attrition,classifications)
-confusionMatrix(table(employeeData$Attrition,classifications))
+# classifications = knn.cv(employeeData[,c("JobInvolvement","WorkLifeBalance","Age",  "JobLevel")], employeeData$Attrition, prob = TRUE, k = 15)
+# table(employeeData$Attrition,classifications)
+# confusionMatrix(table(employeeData$Attrition,classifications))
+
+classifications = knn.cv(employeeDataZ[,c(1,2,3,4,5,6,7,8,9,10)],employeeDataZ$Attrition, prob = TRUE, k = 12)
+table(employeeDataZ$Attrition,classifications)
+confusionMatrix(table(employeeDataZ$Attrition,classifications))
 
 
 ```
+
+
+#Scale Loop for KNN
+
+```{r}
+
+iterations = 500
+numks = 30
+masterAcc = matrix(nrow = iterations, ncol = numks)
+
+splitPerc = 0.70
+
+for(j in 1:iterations)
+{
+  accs = data.frame(accuracy = numeric(30), k = numeric(30))
+  # trainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
+  # train = employeeData[trainIndices,]
+  # test = employeeData[-trainIndices,]
+  trainIndices = sample(1:dim(employeeDataZ)[1],round(splitPerc * dim(employeeDataZ)[1]))
+  train = employeeDataZ[trainIndices,]
+  test = employeeDataZ[-trainIndices,]
+  
+for(i in 1:numks) 
+  
+{
+  # classifications = knn(train[,c("JobInvolvement","WorkLifeBalance","Age",  "JobLevel")],test[,c("JobInvolvement","WorkLifeBalance","Age","JobLevel")],train$Attrition, prob = TRUE, k = i)
+  # table(test$Attrition,classifications)
+  # cm = confusionMatrix(table(test$Attrition,classifications))
+  # 
+  # classifications = knn(train[,c(36,35,34,33,30,25,20,2,7)],test[,c(36,35,34,33,30,25,20,2,7)],train$Attrition, prob = TRUE, k = i)
+  # table(test$Attrition,classifications)
+  # cm = confusionMatrix(table(test$Attrition,classifications))
+  # 
+    # classifications = knn(train[,c(2,7,16,20,22,29,31,33,34,36)],test[,c(2,7,16,20,22,29,31,33,34,36)],train$Attrition, prob = TRUE, k = i)
+    # table(test$Attrition,classifications)
+    # cm = confusionMatrix(table(test$Attrition,classifications))
+    # masterAcc[j,i] = cm$overall[1]
+  
+    classifications = knn(train[,c(1,2,3,4,5,6,7,8,9,10)],test[,c(1,2,3,4,5,6,7,8,9,10)],train$Attrition, prob = TRUE, k = i)
+    table(test$Attrition,classifications)
+    cm = confusionMatrix(table(test$Attrition,classifications))
+    masterAcc[j,i] = cm$overall[1]
+  
+  #accs$accuracy[i] = cm$overall[1]
+  #accs$k[i] = i
+
+}
+
+}
+
+MeanAcc = colMeans(masterAcc)
+#plot(accs$k, accs$accuracy, type ="l", xlab = "K")
+
+plot(seq(1,numks, 1),MeanAcc, type = "l")
+
+#accs
+
+
+```
+
 
 
 # Loop code for KNN
@@ -345,16 +418,71 @@ Test = employeeData[-trainIndices,]
 # CM = confusionMatrix(table(test$Attrition, predict(model,test[,c("Age", "DistanceFromHome",  "JobLevel", "MonthlyIncome", "TrainingTimesLastYear", "YearsAtCompany", "YearsInCurrentRole", "YearsWithCurrManager")])))
 # CM
 
-model = naiveBayes(train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")], train$Attrition)
-CM = confusionMatrix(table(test$Attrition, predict(model,test[,c("Age",  "JobLevel", "MonthlyIncome", "OverTime")])))
+model = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")], Train$Attrition)
+CM = confusionMatrix(table(Test$Attrition, predict(model,Test[,c("Age",  "JobLevel", "MonthlyIncome", "OverTime")])))
 CM
 
 #Conclusion: My Explanatory Variables/Features are: Age, JobLevel, Monthly Income, and Overtime!
 
 
+model1 = naiveBayes(employeeData$Attrition~., data = employeeData)
+
+AB = confusionMatrix(table(employeeData$Attrition, predict(model1, employeeData)))
+
+AB
 
 # "NumCompaniesWorked", "StockOptionLevel"
 ```
+
+
+
+#KNN Model for Sensitivity and Specificity above 60% Each
+
+```{r}
+# Find the average accuracy, Sensitivity, and Specificity of the model
+
+masterAcc = numeric(100)
+massterSensitivity = numeric(100)
+massterSpecificivity = numeric(100)
+tseed = numeric(100)
+
+
+for(seed in 1:100)
+{
+  set.seed(seed)
+  splitPerc = 0.70
+  TrainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
+  Train = employeeData[trainIndices,]
+  Test = employeeData[-trainIndices,]
+  modelAttritionYorN = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
+  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(modelAttritionYorN,Test[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])))
+  masterAcc[seed] = CM$overall[1]
+  massterSensitivity[seed] = CM$byClass[1]
+  massterSpecificivity[seed] = CM$byClass[2]
+  tseed[seed] = seed
+}
+
+
+mean(seed)
+mean(masterAcc)
+mean(massterSensitivity)
+mean(massterSpecificivity)
+
+#My Main predictors:
+  #"Age", "JobLevel", "MonthlyIncome", "OverTime"# Use this one!
+
+#Predictors:
+  #"JobInvolvement", "JobLevel", "OverTime", "WorkLifeBalance" - #really good as well.
+  #"Age", "DistanceFromHome",  "JobLevel", "MonthlyIncome", "TrainingTimesLastYear", "YearsAtCompany", "YearsInCurrentRole", "YearsWithCurrManager" #Not a good - Specificity low..
+  #"Age", "JobLevel", "MonthlyIncome", "OverTime"# Use this one!
+  #"MonthlyIncome", "PercentSalaryHike", "TotalWorkingYears", "YearsAtCompany", "YearsInCurrentRole", "YearsSinceLastPromotion", "YearsWithCurrManager" - not good.
+
+
+
+```
+
+
+
 
 
 #GGPAIRS
