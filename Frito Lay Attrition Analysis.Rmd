@@ -48,12 +48,12 @@ employee_data = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Do
 
 # Find the average accuracy, sensitivity, and specificity of the model. The sensitivity and specificity must both be >= 60%.
 
-master_Acc = numeric(100)
-master_sensitivity = numeric(100)
-master_specificivity = numeric(100)
+master_acc = numeric(1000)
+master_sensitivity = numeric(1000)
+master_specificivity = numeric(1000)
 
 
-for(seed in 1:100)
+for(seed in 1:1000)
 {
   set.seed(seed)
   splitPerc = 0.70
@@ -62,12 +62,12 @@ for(seed in 1:100)
   Test = employee_data[-trainIndices,]
   model_attrition_yesorno = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
   CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])))
-  master_Acc[seed] = CM$overall[1]
+  master_acc[seed] = CM$overall[1]
   master_sensitivity[seed] = CM$byClass[1]
   master_specificivity[seed] = CM$byClass[2]
 }
 
-mean(master_Acc)
+mean(master_acc)
 mean(master_sensitivity)
 mean(master_specificivity)
 
