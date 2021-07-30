@@ -72,6 +72,10 @@ mean(master_sensitivity)
 mean(master_specificivity)
 
 
+# The mean Accuracy is 0.8544061
+# The mean Sensitivity is 0.8688525
+# The mean Specificity is 0.6470588
+
 ```
 
 ## Competition Set with No Attrition
