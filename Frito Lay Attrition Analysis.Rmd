@@ -35,7 +35,6 @@ library(plotly)
 
 employee_data = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2-data.csv")
 
-comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Attrition.csv")
 
 #view(employee_data)
 
@@ -49,57 +48,51 @@ comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doi
 
 # Find the average accuracy, sensitivity, and specificity of the model. The sensitivity and specificity must both be >= 60%.
 
-masterAcc = numeric(100)
-massterSensitivity = numeric(100)
-massterSpecificivity = numeric(100)
-tseed = numeric(100)
+master_Acc = numeric(100)
+master_sensitivity = numeric(100)
+master_specificivity = numeric(100)
 
 
 for(seed in 1:100)
 {
   set.seed(seed)
   splitPerc = 0.70
-  TrainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
-  Train = employeeData[trainIndices,]
-  Test = employeeData[-trainIndices,]
-  modelAttritionYorN = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
-  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(modelAttritionYorN,Test[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])))
-  masterAcc[seed] = CM$overall[1]
-  massterSensitivity[seed] = CM$byClass[1]
-  massterSpecificivity[seed] = CM$byClass[2]
-  tseed[seed] = seed
+  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  Train = employee_data[trainIndices,]
+  Test = employee_data[-trainIndices,]
+  model_attrition_yesorno = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
+  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])))
+  master_Acc[seed] = CM$overall[1]
+  master_sensitivity[seed] = CM$byClass[1]
+  master_specificivity[seed] = CM$byClass[2]
 }
 
-
 mean(seed)
-mean(masterAcc)
-mean(massterSensitivity)
-mean(massterSpecificivity)
-
-#My Main predictors:
-  #"Age", "JobLevel", "MonthlyIncome", "OverTime"# Use this one!
-
-#Predictors:
-  #"JobInvolvement", "JobLevel", "OverTime", "WorkLifeBalance" - #really good as well.
-  #"Age", "DistanceFromHome",  "JobLevel", "MonthlyIncome", "TrainingTimesLastYear", "YearsAtCompany", "YearsInCurrentRole", "YearsWithCurrManager" #Not a good - Specificity low..
-  #"Age", "JobLevel", "MonthlyIncome", "OverTime"# Use this one!
-  #"MonthlyIncome", "PercentSalaryHike", "TotalWorkingYears", "YearsAtCompany", "YearsInCurrentRole", "YearsSinceLastPromotion", "YearsWithCurrManager" - not good.
-
-
-#Test the Model
-
-
-#confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")),
-                      
-                      
-                      
-                      
-CompDataset$Attrition =  predict(modelAttritionYorN,CompDataset[,c("ID", "Age", "JobLevel", "MonthlyIncome", "OverTime")])
-
-view(CompDataset)
+mean(master_Acc)
+mean(master_sensitivity)
+mean(master_specificivity)
 
 
 ```
+
+## Competition Set with No Attrition
+
+```{r}
+#Load in the competition dataset
+comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Attrition.csv")
+
+#Use the Naive Bayes Classification Model to classify each observation as Yes or No to Attrition.
+# Model name = "model_attrition_yesorno"
+
+comp_dataset$Attrition =  predict(model_attrition_yesorno,comp_dataset[,c("ID", "Age", "JobLevel", "MonthlyIncome", "OverTime")])
+
+#view(Comp_dataset)
+
+write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
+
+
+```
+
 
 
 ## Regression Model
