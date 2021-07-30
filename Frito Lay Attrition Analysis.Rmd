@@ -28,7 +28,7 @@ library(plotly)
 
 # Dataset provided for use in the Study
 
-```{r}
+```{r echo=FALSE}
 
 
 # Read in the Employee Dataset that will used in the Analysis.
@@ -67,7 +67,6 @@ for(seed in 1:100)
   master_specificivity[seed] = CM$byClass[2]
 }
 
-mean(seed)
 mean(master_Acc)
 mean(master_sensitivity)
 mean(master_specificivity)
@@ -88,7 +87,7 @@ comp_dataset$Attrition =  predict(model_attrition_yesorno,comp_dataset[,c("ID", 
 
 #view(Comp_dataset)
 
-write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
+#write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
 
 
 ```
@@ -100,4 +99,60 @@ write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
 ```{r}
 
 
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+
+
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobLevel)) +
+  geom_point()
+
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome)) +
+  geom_histogram(binwidth = 10000)
+ 
+
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age)) +
+  geom_point
+  
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobLevel)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+
+fit = lm(MonthlyIncome~JobLevel, data = employeeData)
+
+#predict(fit, newdata =x,interval = "confidence")
+
+preds = predict(fit)
+preds
+
+employeeData$predMI = preds
+
+summary(fit)
+confint(fit)
+
+fit$coefficients
+
+
+AttritionModel = lm(Attrition~Age+MonthlyIncome, data = employeeDataAtt)
+
+predsss = predict(AttritionModel)
+
+predsss
+
+as.numeric(Attrition)
+
+view(employeeData)
+
+
+ggplot(data = employeeData, mapping = aes(x = MonthlyIncome, y = predMI))+
+  geom_point()
+
+#response variable goes into the lm model first
+
+
+require(dplyr)
+employeeDataAtt <- employeeData %>%
+      mutate(Attrition = ifelse(Attrition == "No",0,1))
+
+view(employeeDataAtt)
 ```
