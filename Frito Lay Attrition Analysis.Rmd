@@ -80,18 +80,18 @@ mean(master_specificivity)
 
 ## Competition Set with No Attrition
 
-```{r}
+```{r echo = FALSE}
 #Load in the competition dataset
 comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Attrition.csv")
 
 #Use the Naive Bayes Classification Model to classify each observation as Yes or No to Attrition.
 # Model name = "model_attrition_yesorno"
 
-comp_dataset$Attrition =  predict(model_attrition_yesorno,comp_dataset[,c("ID", "Age", "JobLevel", "MonthlyIncome", "OverTime")])
+comp_dataset$Attrition =  predict(model_attrition_yesorno,comp_dataset[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])
 
-#view(Comp_dataset)
+view(comp_dataset)
 
-#write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
+write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
 
 
 ```
