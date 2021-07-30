@@ -1,0 +1,23 @@
+---
+title: "Frito Lay Analysis"
+author: "Rayon M"
+date: "7/30/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+
+```
+
+
+
+
+```{r}
+
+
+```

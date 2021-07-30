@@ -32,6 +32,8 @@ library(plotly)
 
 employeeData = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2-data.csv")
 
+CompDataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Attrition.csv")
+
 view(employeeData)
 ```
 
@@ -439,6 +441,7 @@ AB
 #KNN Model for Sensitivity and Specificity above 60% Each
 
 ```{r}
+
 # Find the average accuracy, Sensitivity, and Specificity of the model
 
 masterAcc = numeric(100)
@@ -478,12 +481,96 @@ mean(massterSpecificivity)
   #"MonthlyIncome", "PercentSalaryHike", "TotalWorkingYears", "YearsAtCompany", "YearsInCurrentRole", "YearsSinceLastPromotion", "YearsWithCurrManager" - not good.
 
 
+#Test the Model
+
+
+#confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")),
+                      
+                      
+                      
+                      
+CompDataset$Attrition =  predict(modelAttritionYorN,CompDataset[,c("ID", "Age", "JobLevel", "MonthlyIncome", "OverTime")])
+
+view(CompDataset)
+
+
+x
 
 ```
 
 
+# Linear Regression
+
+```{r}
+
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
 
 
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobLevel)) +
+  geom_point()
+
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome)) +
+  geom_histogram(binwidth = 10000)
+ 
+
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age)) +
+  geom_point
+  
+employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobLevel)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+
+fit = lm(MonthlyIncome~JobLevel, data = employeeData)
+
+#predict(fit, newdata =x,interval = "confidence")
+
+preds = predict(fit)
+preds
+
+employeeData$predMI = preds
+
+summary(fit)
+confint(fit)
+
+fit$coefficients
+
+
+AttritionModel = lm(Attrition~Age+MonthlyIncome, data = employeeDataAtt)
+
+predsss = predict(AttritionModel)
+
+predsss
+
+as.numeric(Attrition)
+
+view(employeeData)
+
+
+ggplot(data = employeeData, mapping = aes(x = MonthlyIncome, y = predMI))+
+  geom_point()
+
+#response variable goes into the lm model first
+```
+
+
+## Linear Regression Model.
+
+```{r}
+
+# Create a regression model that will predict the 
+require(dplyr)
+employeeDataAtt <- employeeData %>%
+      mutate(Attrition = ifelse(Attrition == "No",0,1))
+
+view(employeeDataAtt)
+
+
+
+
+
+```
 
 #GGPAIRS
 
@@ -528,7 +615,8 @@ employeeData %>%
 #High correlation between Percent Salary Hike and Performance Rating - makes sense.
 
 employeeData %>% select( Attrition,
-  JobSatisfaction         
+  JobSatisfaction
+  ,Age
  ,MaritalStatus           
  ,MonthlyIncome           
  ,MonthlyRate
@@ -593,6 +681,28 @@ employeeData %>%
   geom_tile(mapping = aes(fill = n))
 
 
+
+
+
+employeeData %>% select( Attrition,
+  JobSatisfaction
+  ,Age
+ ,MaritalStatus           
+ ,MonthlyIncome           
+ ,MonthlyRate
+ ,NumCompaniesWorked
+,Gender
+,HourlyRate
+,JobInvolvement          
+,JobLevel                
+,JobRole
+,Education               
+ ,EducationField          
+ ,EmployeeCount           
+ ,EmployeeNumber          
+ ,EnvironmentSatisfaction 
+) %>%
+  ggpairs(mapping = aes(color = Attrition))
 ```
 
 
