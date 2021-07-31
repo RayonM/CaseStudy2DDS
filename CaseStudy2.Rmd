@@ -684,25 +684,65 @@ employeeData %>%
 
 
 
-employeeData %>% select( Attrition,
-  JobSatisfaction
+employeeData %>% select(Attrition
+  ,JobSatisfaction
   ,Age
- ,MaritalStatus           
- ,MonthlyIncome           
- ,MonthlyRate
- ,NumCompaniesWorked
-,Gender
-,HourlyRate
-,JobInvolvement          
-,JobLevel                
-,JobRole
-,Education               
- ,EducationField          
- ,EmployeeCount           
- ,EmployeeNumber          
- ,EnvironmentSatisfaction 
-) %>%
+  ,MaritalStatus          
+  ,MonthlyIncome
+  ,MonthlyRate
+  ,NumCompaniesWorked
+  ,Gender
+  ,HourlyRate
+  ,JobInvolvement          
+  ,JobLevel                
+  ,JobRole
+  ,Education               
+  ,EducationField          
+  ,EmployeeCount           
+  ,EmployeeNumber          
+  ,EnvironmentSatisfaction ) %>%
   ggpairs(mapping = aes(color = Attrition))
+
+# Age
+# Attrition
+# BusinessTravel
+# DailyRate
+# Department
+# DistanceFromHome
+# Education
+# EducationField
+# EmployeeCount
+# EmployeeNumber
+# EnvironmentSatisfaction
+# Gender
+# HourlyRate
+# JobInvolvement
+# JobLevel
+# JobRole
+# JobSatisfaction
+# MaritalStatus
+# MonthlyIncome
+# MonthlyRate
+# NumCompaniesWorked
+# Over18
+# OverTime
+# PercentSalaryHike
+# PerformanceRating
+# RelationshipSatisfaction
+# StandardHours
+# StockOptionLevel
+# TotalWorkingYears
+# TrainingTimesLastYear
+# WorkLifeBalance
+# YearsAtCompany
+# YearsInCurrentRole
+# YearsSinceLastPromotion
+# YearsWithCurrManager
+
+
+
+
+
 ```
 
 

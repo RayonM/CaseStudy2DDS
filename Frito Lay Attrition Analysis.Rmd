@@ -26,17 +26,15 @@ library(plotly)
 
 ```
 
-# Dataset provided for use in the Study
+# Dataset provided for use in the Analysis
 
 ```{r echo=FALSE}
 
-
 # Read in the Employee Dataset that will used in the Analysis.
-
 employee_data = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2-data.csv")
 
 
-#view(employee_data)
+view(employee_data)
 
 ```
 
@@ -78,7 +76,7 @@ mean(master_specificivity)
 
 ```
 
-## Competition Set with No Attrition
+## Competition dataset with No Attrition
 
 ```{r echo = FALSE}
 #Load in the competition dataset
@@ -93,14 +91,78 @@ view(comp_dataset)
 
 write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
 
+```
+
+
+
+## Regression Modelto predict Attrition
+
+```{r}
+
+# Convert Attrition to a numeric data
+employee_data <- employee_data %>%
+  mutate(AttritionBinary = ifelse(Attrition == "No",0,1))
+
+str(employee_data)
+
+view(employee_data[c(1,3,37)])
+
+
+
+attrition_model = lm(AttritionBinary~JobLevel+MonthlyIncome, data = employee_data)
+summary(attrition_model)
+
+#predict(fit, newdata =x,interval = "confidence")
+
+preds = predict(fit)
+preds
+
+employeeData$predMI = preds
+
+summary(fit)
+confint(fit)
+
+fit$coefficients
+
+
+AttritionModel = lm(Attrition~Age+MonthlyIncome, data = employeeDataAtt)
+
+predsss = predict(AttritionModel)
+
+predsss
+
+as.numeric(Attrition)
+
+view(employeeData)
+
+
+ggplot(data = employeeData, mapping = aes(x = MonthlyIncome, y = predMI))+
+  geom_point()
+
+#response variable goes into the lm model first
+
+
+require(dplyr)
+
+
+
+cor.test(employee_data$MonthlyIncome, employee_data$Age)
+
+view(employeeDataAtt)
+
 
 ```
 
 
 
-## Regression Model
+
+
+
+
 
 ```{r}
+
+
 
 
 employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age)) +
@@ -158,5 +220,101 @@ require(dplyr)
 employeeDataAtt <- employeeData %>%
       mutate(Attrition = ifelse(Attrition == "No",0,1))
 
+
+cor.test(employee_data$MonthlyIncome, employee_data$Age)
+
 view(employeeDataAtt)
+
 ```
+
+```{r}
+index <- createDataPartition(adult$Class, p = .70, list = FALSE)
+train <- adult[index, ]
+test <- adult[-index, ]
+
+```
+
+```{r}
+
+employee_data %>% select(Attrition
+  ,JobSatisfaction
+  ,Age
+  ,MaritalStatus          
+  ,MonthlyIncome
+  ,MonthlyRate
+  ,NumCompaniesWorked
+  ,Gender
+  ,HourlyRate
+  ,JobInvolvement          
+  ,JobLevel                
+  ,JobRole
+  ,Education               
+  ,EducationField          
+  ,EmployeeCount           
+  ,EmployeeNumber          
+  ,EnvironmentSatisfaction) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+# Age
+# Attrition
+# BusinessTravel
+# DailyRate
+# Department
+# DistanceFromHome
+# Education
+# EducationField
+# EmployeeCount
+# EmployeeNumber
+# EnvironmentSatisfaction
+# Gender
+# HourlyRate
+# JobInvolvement
+# JobLevel
+# JobRole
+# JobSatisfaction
+# MaritalStatus
+# MonthlyIncome
+# MonthlyRate
+# NumCompaniesWorked
+# Over18
+# OverTime
+# PercentSalaryHike
+# PerformanceRating
+# RelationshipSatisfaction
+# StandardHours
+# StockOptionLevel
+# TotalWorkingYears
+# TrainingTimesLastYear
+# WorkLifeBalance
+# YearsAtCompany
+# YearsInCurrentRole
+# YearsSinceLastPromotion
+# YearsWithCurrManager
+
+
+```
+
+
+```{r}
+
+employeeData %>% select(Attrition
+  ,JobSatisfaction
+  ,Age
+  ,MaritalStatus          
+  ,MonthlyIncome
+  ,MonthlyRate
+  ,NumCompaniesWorked
+  ,Gender
+  ,HourlyRate
+  ,JobInvolvement          
+  ,JobLevel                
+  ,JobRole
+  ,Education               
+  ,EducationField          
+  ,EmployeeCount           
+  ,EmployeeNumber          
+  ,EnvironmentSatisfaction ) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+```
+
