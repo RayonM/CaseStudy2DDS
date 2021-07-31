@@ -3,6 +3,8 @@ title: "Frito Lay Analysis"
 author: "Rayon M"
 date: "7/30/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -236,8 +238,8 @@ test <- adult[-index, ]
 
 ```{r}
 
-employee_data %>% select(Attrition
-  ,JobSatisfaction
+employee_data %>% select(Attrition,
+  JobSatisfaction
   ,Age
   ,MaritalStatus          
   ,MonthlyIncome

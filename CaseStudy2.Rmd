@@ -1006,6 +1006,7 @@ ggplot(data = employeeData) +
 
 employeeData %>% 
   count(cut_width(DailyRate, 1))
+```
 
 ```{r}
 
