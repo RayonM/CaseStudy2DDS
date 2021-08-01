@@ -78,7 +78,7 @@ mean(master_specificivity)
 
 ```
 
-## Competition dataset with No Attrition
+## Competition dataset with No Attrition. Use the Naive Bayes Model to predict Attrition.
 
 ```{r echo = FALSE}
 #Load in the competition dataset
@@ -97,70 +97,12 @@ write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
 
 
 
-## Regression Modelto predict Attrition
-
-```{r}
-
-# Convert Attrition to a numeric data
-employee_data <- employee_data %>%
-  mutate(AttritionBinary = ifelse(Attrition == "No",0,1))
-
-str(employee_data)
-
-view(employee_data[c(1,3,37)])
-
-
-
-attrition_model = lm(AttritionBinary~JobLevel+MonthlyIncome, data = employee_data)
-summary(attrition_model)
-
-#predict(fit, newdata =x,interval = "confidence")
-
-preds = predict(fit)
-preds
-
-employeeData$predMI = preds
-
-summary(fit)
-confint(fit)
-
-fit$coefficients
-
-
-AttritionModel = lm(Attrition~Age+MonthlyIncome, data = employeeDataAtt)
-
-predsss = predict(AttritionModel)
-
-predsss
-
-as.numeric(Attrition)
-
-view(employeeData)
-
-
-ggplot(data = employeeData, mapping = aes(x = MonthlyIncome, y = predMI))+
-  geom_point()
-
-#response variable goes into the lm model first
-
-
-require(dplyr)
-
-
-
-cor.test(employee_data$MonthlyIncome, employee_data$Age)
-
-view(employeeDataAtt)
-
-
-```
-
-
 # Regression Model to predict MonthlyIncome
 ```{r}
-
+#MSPE - Mean squared prediction error 
 #MSE = Sum of ((y - ybar)^2)/n
 #RMSE = square root of the MSE
+# standard deviation
 
 
 #Goal, create a regression model that has an RMSE less than $3000
@@ -170,8 +112,8 @@ view(employeeDataAtt)
 
 # Plot the following variables to see the correlation with MonthlyIncome
 
-employeeData %>% select(MonthlyIncome, Age, Department, EducationField, JobLevel, JobRole, TotalWorkingYears, YearsAtCompany) %>%
-ggpairs()
+# employeeData %>% select(MonthlyIncome, Age, Department, EducationField, JobLevel, JobRole, TotalWorkingYears, YearsAtCompany) %>%
+# ggpairs()
 
 ## Age and Total Working Years had the best fit.
 
@@ -206,7 +148,7 @@ MSPEHolderModel18 = numeric(numMSPEs)
 for (i in 1:numMSPEs)
 {
   
-  index <- createDataPartition(employee_data$ID, p = .70, list = FALSE)
+  index <- createDataPartition(employee_data$ID, p = .60, list = FALSE)
   monthly_income_train <- employee_data[index, ]
   monthly_income_test <- employee_data[-index, ]
   
@@ -284,12 +226,16 @@ for (i in 1:numMSPEs)
   MSPEHolderModel9[i] = MSPE9
 
  
-  #   #Model 4
-  # monthly_income_model_fit4 = lm(MonthlyIncome ~ Department, data = monthly_income_train)
-  # monthly_income_Pred_4 = predict(monthly_income_model_fit4, newdata = monthly_income_test)
-  # MSPE4 = mean((employee_data$MonthlyIncome - monthly_income_Pred_4)^2)
-  # MSPE4
-  # MSPEHolderModel4[i] = MSPE4
+  #Model 10
+  # monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
+  # geom_point()
+  monthly_income_test_mutate <- employee_data %>% mutate(TotalWorkingYears2 = TotalWorkingYears^2)
+  monthly_income_model_fit10 = lm(MonthlyIncome~TotalWorkingYears+TotalWorkingYears2, data = monthly_income_test_mutate)
+  monthly_income_Pred_10 = predict(monthly_income_model_fit10, newdata = monthly_income_test_mutate)
+  MSPE10 = mean((employee_data$MonthlyIncome - monthly_income_Pred_10)^2)
+  MSPE10
+  MSPEHolderModel10[i] = MSPE10
+  
   
   
   
@@ -304,7 +250,7 @@ mean(MSPEHolderModel6)
 mean(MSPEHolderModel7)
 mean(MSPEHolderModel8)
 mean(MSPEHolderModel9)
-# mean(MSPEHolderModel10)
+mean(MSPEHolderModel10)
 # mean(MSPEHolderModel11)
 # mean(MSPEHolderModel13)
 # mean(MSPEHolderModel14)
@@ -314,28 +260,29 @@ mean(MSPEHolderModel9)
 # mean(MSPEHolderModel18)
 
 
-sqrt(mean(MSPEHolderModel1))
-sqrt(mean(MSPEHolderModel2))
-sqrt(mean(MSPEHolderModel3))
-sqrt(mean(MSPEHolderModel4))
-sqrt(mean(MSPEHolderModel5))
-sqrt(mean(MSPEHolderModel6))
-sqrt(mean(MSPEHolderModel7))
-sqrt(mean(MSPEHolderModel8))
-sqrt(mean(MSPEHolderModel9))
-# sqrt(mean(MSPEHolderModel10))
-# sqrt(mean(MSPEHolderModel11))
-# sqrt(mean(MSPEHolderModel12))
-# sqrt(mean(MSPEHolderModel13))
-# sqrt(mean(MSPEHolderModel14))
-# sqrt(mean(MSPEHolderModel15))
-# sqrt(mean(MSPEHolderModel16))
-# sqrt(mean(MSPEHolderModel17))
-# sqrt(mean(MSPEHolderModel18))
-
 
 ```
 
+## Competition dataset with No MonthlyIncome. Use the Linear Regression Model to predict Monthly Income.
+
+```{r}
+#Load in the competition dataset
+monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Salary.csv")
+
+#Use the Linear Regression Model to predict the MonthlyIncome for each observation.
+# Model name = "model_attrition_yesorno"
+
+#monthly_income_comp_dataset$PredMonthlyIncome =  predict(model_attrition_yesorno,comp_dataset[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])
+
+#view(monthly_income_comp_dataset)
+
+#write.csv(monthly_income_comp_dataset, "Case2PredictionsMorris Salary.csv")
+
+```
+
+
+
+# Summary of the Models
 
 ```{r}
 summary(monthly_income_model_fit1) # Age Not a Good Fit
@@ -347,14 +294,18 @@ confint(monthly_income_model_fit2)
 summary(monthly_income_model_fit3) #EducationField - Slightly good.
 confint(monthly_income_model_fit3)
 
-summary(monthly_income_model_fit4) # JobLevel Good Fit! - It has a RMSE of 1427
+summary(monthly_income_model_fit4) # JobLevel Good Fit! - It has a RMSE of 1414
 confint(monthly_income_model_fit4)
 
-summary(monthly_income_model_fit5) # Slightly good fit - RMSE of 1935
+summary(monthly_income_model_fit5) # Slightly good fit - RMSE of 2044
 confint(monthly_income_model_fit5)
 
-summary(monthly_income_model_fit6) # Not a good fit
+summary(monthly_income_model_fit6) # Great fit - RMSE of 2826
 confint(monthly_income_model_fit6)
+monthly_income_test %>% ggplot(aes(x = MonthlyIncome, y = TotalWorkingYears)) + 
+  geom_point() +
+  geom_line(data = monthly_income_test, aes( x = MonthlyIncome, y = monthly_income_Pred_6, col = "red"))
+
 
 summary(monthly_income_model_fit7) # YearsatCompany Good fit
 confint(monthly_income_model_fit7)
@@ -364,8 +315,25 @@ summary(monthly_income_model_fit8) # Not a good fit
 confint(monthly_income_model_fit8)
 
 
-summary(monthly_income_model_fit9) # This is the best fit!!!!!!!
+summary(monthly_income_model_fit9) # This is the best fit!!!!!!! 1071 Fail to reject the Null Hypothesis
 confint(monthly_income_model_fit9)
+
+monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)
+
+monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
+  geom_point()+
+  geom_line(colour = "red")+
+  geom_smooth(method = "lm", se = FALSE)
+
+summary(monthly_income_model_fit10)
+confint(monthly_income_model_fit10)
+
+monthly_income_test_mutate %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
+  geom_point()+
+  geom_line(colour = "red")+
+  geom_smooth(method = "lm", se = FALSE)
 
 ```
 
@@ -418,7 +386,11 @@ cor.test(employee_data$MonthlyIncome, employee_data$TotalWorkingYears)
 employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = MonthlyIncome))+
   geom_point()+
   geom_smooth(method = "lm" , se = FALSE)+
-  ggtitle("Total Years vs. MonthlyIncome")
+  ggtitle("Total Years vs. MonthlyIncome")+
+  coord_flip()
+
+
+
 ```
 
 
