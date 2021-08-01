@@ -170,19 +170,15 @@ view(employeeDataAtt)
 
 # Plot the following variables to see the correlation with MonthlyIncome
 
-#employeeData %>% select(MonthlyIncome, Age, Department, EducationField, JobLevel, JobRole, TotalWorkingYears, YearsAtCompany) %>%
-  #ggpairs()
+employeeData %>% select(MonthlyIncome, Age, Department, EducationField, JobLevel, JobRole, TotalWorkingYears, YearsAtCompany) %>%
+ggpairs()
 
 ## Age and Total Working Years had the best fit.
 
 #plot a the linear regression graph of TotalWorkingYears vs. MonthlyIncome
 
-cor.test(employee_data$MonthlyIncome, employee_data$TotalWorkingYears)
 
-employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = MonthlyIncome))+
-  geom_point()+
-  geom_smooth(method = "lm" , se = FALSE)+
-  ggtitle("Total Years vs. MonthlyIncome")
+
 
 
 #Train the Model
@@ -281,7 +277,7 @@ for (i in 1:numMSPEs)
   
  
   #Model 9
-  monthly_income_model_fit9 = lm(MonthlyIncome ~ YearsAtCompany+Department+EducationField, data = monthly_income_train)
+  monthly_income_model_fit9 = lm(MonthlyIncome ~ JobRole+JobLevel+TotalWorkingYears, data = monthly_income_train)
   monthly_income_Pred_9 = predict(monthly_income_model_fit9, newdata = monthly_income_test)
   MSPE9 = mean((employee_data$MonthlyIncome - monthly_income_Pred_9)^2)
   MSPE9
@@ -341,7 +337,89 @@ sqrt(mean(MSPEHolderModel9))
 ```
 
 
+```{r}
+summary(monthly_income_model_fit1) # Age Not a Good Fit
+confint(monthly_income_model_fit1)
+  
+summary(monthly_income_model_fit2) # Department - Not a good fit
+confint(monthly_income_model_fit2)
 
+summary(monthly_income_model_fit3) #EducationField - Slightly good.
+confint(monthly_income_model_fit3)
+
+summary(monthly_income_model_fit4) # JobLevel Good Fit! - It has a RMSE of 1427
+confint(monthly_income_model_fit4)
+
+summary(monthly_income_model_fit5) # Slightly good fit - RMSE of 1935
+confint(monthly_income_model_fit5)
+
+summary(monthly_income_model_fit6) # Not a good fit
+confint(monthly_income_model_fit6)
+
+summary(monthly_income_model_fit7) # YearsatCompany Good fit
+confint(monthly_income_model_fit7)
+
+
+summary(monthly_income_model_fit8) # Not a good fit
+confint(monthly_income_model_fit8)
+
+
+summary(monthly_income_model_fit9) # This is the best fit!!!!!!!
+confint(monthly_income_model_fit9)
+
+```
+
+
+```{r}
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = Department))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Years vs. MonthlyIncome")
+cor.test(employee_data$MonthlyIncome, as.factor(employee_data$Department))
+
+
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Years vs. MonthlyIncome")
+
+
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = EducationField))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Years vs. MonthlyIncome")+
+  coord_flip()
+
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobLevel))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Years vs. MonthlyIncome")
+cor.test(employee_data$MonthlyIncome, employee_data$JobLevel)
+
+
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobRole))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Years vs. MonthlyIncome")+
+  coord_flip()
+
+str(employee_data)
+
+cor.test(employee_data$MonthlyIncome, employee_data$YearsAtCompany)
+
+employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = YearsAtCompany, position = "jitters"), position = "jitters")+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Years vs. MonthlyIncome")
+
+
+cor.test(employee_data$MonthlyIncome, employee_data$TotalWorkingYears)
+
+employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = MonthlyIncome))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Years vs. MonthlyIncome")
+```
 
 
 
