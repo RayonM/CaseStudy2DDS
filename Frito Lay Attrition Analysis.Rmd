@@ -156,6 +156,189 @@ view(employeeDataAtt)
 ```
 
 
+# Regression Model to predict MonthlyIncome
+```{r}
+
+#MSE = Sum of ((y - ybar)^2)/n
+#RMSE = square root of the MSE
+
+
+#Goal, create a regression model that has an RMSE less than $3000
+
+# Dependent Variable: MonthlyIncome
+# Predictors/Experiment variable(s): Age and Total Working Years
+
+# Plot the following variables to see the correlation with MonthlyIncome
+
+#employeeData %>% select(MonthlyIncome, Age, Department, EducationField, JobLevel, JobRole, TotalWorkingYears, YearsAtCompany) %>%
+  #ggpairs()
+
+## Age and Total Working Years had the best fit.
+
+#plot a the linear regression graph of TotalWorkingYears vs. MonthlyIncome
+
+cor.test(employee_data$MonthlyIncome, employee_data$TotalWorkingYears)
+
+employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = MonthlyIncome))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Years vs. MonthlyIncome")
+
+
+#Train the Model
+
+numMSPEs = 1000
+MSPEHolderModel1 = numeric(numMSPEs)
+MSPEHolderModel2 = numeric(numMSPEs)
+MSPEHolderModel3 = numeric(numMSPEs)
+MSPEHolderModel4 = numeric(numMSPEs)
+MSPEHolderModel5 = numeric(numMSPEs)
+MSPEHolderModel6 = numeric(numMSPEs)
+MSPEHolderModel7 = numeric(numMSPEs)
+MSPEHolderModel8 = numeric(numMSPEs)
+MSPEHolderModel9 = numeric(numMSPEs)
+MSPEHolderModel10 = numeric(numMSPEs)
+MSPEHolderModel11 = numeric(numMSPEs)
+MSPEHolderModel12 = numeric(numMSPEs)
+MSPEHolderModel13 = numeric(numMSPEs)
+MSPEHolderModel14 = numeric(numMSPEs)
+MSPEHolderModel15 = numeric(numMSPEs)
+MSPEHolderModel16 = numeric(numMSPEs)
+MSPEHolderModel17 = numeric(numMSPEs)
+MSPEHolderModel18 = numeric(numMSPEs)
+
+for (i in 1:numMSPEs)
+{
+  
+  index <- createDataPartition(employee_data$ID, p = .70, list = FALSE)
+  monthly_income_train <- employee_data[index, ]
+  monthly_income_test <- employee_data[-index, ]
+  
+  dim(monthly_income_test)
+  dim(monthly_income_train)
+  
+  #Model 1
+  
+  monthly_income_model_fit1 = lm(MonthlyIncome ~ Age, data = monthly_income_train)
+  monthly_income_Pred_1 = predict(monthly_income_model_fit1, newdata = monthly_income_test)
+  
+  MSPE1 = mean((employee_data$MonthlyIncome - monthly_income_Pred_1)^2)
+  MSPE1
+  MSPEHolderModel1[i] = MSPE1
+  
+  #Model 2
+  monthly_income_model_fit2 = lm(MonthlyIncome ~ Department, data = monthly_income_train)
+  monthly_income_Pred_2 = predict(monthly_income_model_fit2, newdata = monthly_income_test)
+  MSPE2 = mean((employee_data$MonthlyIncome - monthly_income_Pred_2)^2)
+  MSPE2
+  MSPEHolderModel2[i] = MSPE2
+  
+  #Model 3
+  monthly_income_model_fit3 = lm(MonthlyIncome ~ EducationField, data = monthly_income_train)
+  monthly_income_Pred_3 = predict(monthly_income_model_fit3, newdata = monthly_income_test)
+  MSPE3 = mean((employee_data$MonthlyIncome - monthly_income_Pred_3)^2)
+  MSPE3
+  MSPEHolderModel3[i] = MSPE3
+  
+  
+  #Model 4
+  monthly_income_model_fit4 = lm(MonthlyIncome ~ JobLevel, data = monthly_income_train)
+  monthly_income_Pred_4 = predict(monthly_income_model_fit4, newdata = monthly_income_test)
+  MSPE4 = mean((employee_data$MonthlyIncome - monthly_income_Pred_4)^2)
+  MSPE4
+  MSPEHolderModel4[i] = MSPE4
+  
+  #Model 5
+  monthly_income_model_fit5 = lm(MonthlyIncome ~ JobRole, data = monthly_income_train)
+  monthly_income_Pred_5 = predict(monthly_income_model_fit5, newdata = monthly_income_test)
+  MSPE5 = mean((employee_data$MonthlyIncome - monthly_income_Pred_5)^2)
+  MSPE5
+  MSPEHolderModel5[i] = MSPE5
+  
+  
+  #Model 6
+  monthly_income_model_fit6 = lm(MonthlyIncome ~ TotalWorkingYears, data = monthly_income_train)
+  monthly_income_Pred_6 = predict(monthly_income_model_fit6, newdata = monthly_income_test)
+  MSPE6 = mean((employee_data$MonthlyIncome - monthly_income_Pred_6)^2)
+  MSPE6
+  MSPEHolderModel6[i] = MSPE6
+  
+  
+  #Model 7
+  monthly_income_model_fit7 = lm(MonthlyIncome ~ YearsAtCompany, data = monthly_income_train)
+  monthly_income_Pred_7 = predict(monthly_income_model_fit7, newdata = monthly_income_test)
+  MSPE7 = mean((employee_data$MonthlyIncome - monthly_income_Pred_7)^2)
+  MSPE7
+  MSPEHolderModel7[i] = MSPE7
+  
+  
+  #Model 8
+  monthly_income_model_fit8 = lm(MonthlyIncome ~ Age+Department+EducationField+JobLevel+JobRole+TotalWorkingYears+YearsAtCompany, data = monthly_income_train)
+  monthly_income_Pred_8 = predict(monthly_income_model_fit8, newdata = monthly_income_test)
+  MSPE8 = mean((employee_data$MonthlyIncome - monthly_income_Pred_8)^2)
+  MSPE8
+  MSPEHolderModel8[i] = MSPE8
+  
+ 
+  #Model 9
+  monthly_income_model_fit9 = lm(MonthlyIncome ~ YearsAtCompany+Department+EducationField, data = monthly_income_train)
+  monthly_income_Pred_9 = predict(monthly_income_model_fit9, newdata = monthly_income_test)
+  MSPE9 = mean((employee_data$MonthlyIncome - monthly_income_Pred_9)^2)
+  MSPE9
+  MSPEHolderModel9[i] = MSPE9
+
+ 
+  #   #Model 4
+  # monthly_income_model_fit4 = lm(MonthlyIncome ~ Department, data = monthly_income_train)
+  # monthly_income_Pred_4 = predict(monthly_income_model_fit4, newdata = monthly_income_test)
+  # MSPE4 = mean((employee_data$MonthlyIncome - monthly_income_Pred_4)^2)
+  # MSPE4
+  # MSPEHolderModel4[i] = MSPE4
+  
+  
+  
+}
+
+mean(MSPEHolderModel1)
+mean(MSPEHolderModel2)
+mean(MSPEHolderModel3)
+mean(MSPEHolderModel4)
+mean(MSPEHolderModel5)
+mean(MSPEHolderModel6)
+mean(MSPEHolderModel7)
+mean(MSPEHolderModel8)
+mean(MSPEHolderModel9)
+# mean(MSPEHolderModel10)
+# mean(MSPEHolderModel11)
+# mean(MSPEHolderModel13)
+# mean(MSPEHolderModel14)
+# mean(MSPEHolderModel15)
+# mean(MSPEHolderModel16)
+# mean(MSPEHolderModel17)
+# mean(MSPEHolderModel18)
+
+
+sqrt(mean(MSPEHolderModel1))
+sqrt(mean(MSPEHolderModel2))
+sqrt(mean(MSPEHolderModel3))
+sqrt(mean(MSPEHolderModel4))
+sqrt(mean(MSPEHolderModel5))
+sqrt(mean(MSPEHolderModel6))
+sqrt(mean(MSPEHolderModel7))
+sqrt(mean(MSPEHolderModel8))
+sqrt(mean(MSPEHolderModel9))
+# sqrt(mean(MSPEHolderModel10))
+# sqrt(mean(MSPEHolderModel11))
+# sqrt(mean(MSPEHolderModel12))
+# sqrt(mean(MSPEHolderModel13))
+# sqrt(mean(MSPEHolderModel14))
+# sqrt(mean(MSPEHolderModel15))
+# sqrt(mean(MSPEHolderModel16))
+# sqrt(mean(MSPEHolderModel17))
+# sqrt(mean(MSPEHolderModel18))
+
+
+```
 
 
 
@@ -230,80 +413,78 @@ view(employeeDataAtt)
 ```
 
 ```{r}
-index <- createDataPartition(adult$Class, p = .70, list = FALSE)
-train <- adult[index, ]
-test <- adult[-index, ]
+# Code on how to break out the training and test data set.
+
+# index <- createDataPartition(adult$Class, p = .70, list = FALSE)
+# train <- adult[index, ]
+# test <- adult[-index, ]
 
 ```
 
 ```{r}
 
 employee_data %>% select(Attrition,
-  JobSatisfaction
-  ,Age
-  ,MaritalStatus          
-  ,MonthlyIncome
-  ,MonthlyRate
-  ,NumCompaniesWorked
-  ,Gender
-  ,HourlyRate
-  ,JobInvolvement          
-  ,JobLevel                
-  ,JobRole
-  ,Education               
-  ,EducationField          
-  ,EmployeeCount           
-  ,EmployeeNumber          
-  ,EnvironmentSatisfaction) %>%
+ ) %>%
   ggpairs(mapping = aes(color = Attrition))
 
-# Age
-# Attrition
-# BusinessTravel
-# DailyRate
-# Department
-# DistanceFromHome
-# Education
-# EducationField
-# EmployeeCount
-# EmployeeNumber
-# EnvironmentSatisfaction
-# Gender
-# HourlyRate
-# JobInvolvement
-# JobLevel
-# JobRole
-# JobSatisfaction
-# MaritalStatus
+# Age - potential
+# Attrition - throw away
+# BusinessTravel - throw away
+# DailyRate - throw away
+# Department potential
+# DistanceFromHome - throw away
+# Education - throw away
+# EducationField  - potential
+# EmployeeCount - throw away
+# EmployeeNumber - throw awy
+# EnvironmentSatisfaction - Throw away
+# Gender - Throw away
+# HourlyRate - Throw away
+# JobInvolvement - throw away
+# JobLevel - potential
+# JobRole - potential
+# JobSatisfaction - Throw away
+# MaritalStatus - throw away
 # MonthlyIncome
-# MonthlyRate
-# NumCompaniesWorked
-# Over18
-# OverTime
-# PercentSalaryHike
-# PerformanceRating
-# RelationshipSatisfaction
-# StandardHours
-# StockOptionLevel
-# TotalWorkingYears
-# TrainingTimesLastYear
-# WorkLifeBalance
-# YearsAtCompany
-# YearsInCurrentRole
-# YearsSinceLastPromotion
-# YearsWithCurrManager
+# MonthlyRate - throw away
+# NumCompaniesWorked - throw away
+# Over18 - throw away
+# OverTime - throw away
+# PercentSalaryHike - Throw away
+# PerformanceRating - throw away
+# RelationshipSatisfaction - Throw away
+# StandardHours - throw away
+# StockOptionLevel - throw away
+# TotalWorkingYears - High potential
+# TrainingTimesLastYear - Throw away
+# WorkLifeBalance - Throw away
+# YearsAtCompany - slight potential
+# YearsInCurrentRole  - throw away
+# YearsSinceLastPromotion - throw away
+# YearsWithCurrManager - throw away
 
 
 ```
 
 
+
+#EDA CHUNK
 ```{r}
 
-employeeData %>% select(Attrition
+# To examine the distribution of a CATEGORICAL variable, use a bar chart
+# You can compute these values manually with dplyr::count()
+# To examine the distribution of a continuous variable, use a histogram:
+# You can compute this by hand by combining dplyr::count() and ggplot2::cut_width():
+# Look at overtime and numberofcompanies worked.. there may be a trend there.Why is the average lower for one versus the other.
+# Look at the YearswithcurrentManager and YearsatCompany.. something there
+# Yearswithcurrentmanager and YearsSinceLastPromotion
+# Yearsincurrentrole and YearsSinceLastPromotion
+
+
+employeeData %>% select(MonthlyIncome
   ,JobSatisfaction
   ,Age
   ,MaritalStatus          
-  ,MonthlyIncome
   ,MonthlyRate
   ,NumCompaniesWorked
   ,Gender
@@ -318,5 +499,100 @@ employeeData %>% select(Attrition
   ,EnvironmentSatisfaction ) %>%
   ggpairs(mapping = aes(color = Attrition))
 
+
+
+
+
+
+ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, y = MonthlyIncome, colour = Attrition)) +
+  geom_area()
+
+
+
+ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, colour = JobRole)) +
+  geom_freqpoly()
+
+# Observation, the people with salary less than $5,000 is greatest among the Research and Development Department, why?
+# Are they younger?, Do they have lower job levels, do they work less hours? Did more people leave the company out of the Research & Development department? What department had the highest Attrition?
+
+
+# Research Scientist are the highest among those making less than $5,000. They start out a little higher than other roles. but only less than 5 are making over $10,000 
+ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, colour = JobRole)) +
+  geom_freqpoly()
+ 
+employee_data %>% group_by(JobRole) %>% count(MonthlyIncome)
+
+# Monthly Income
+ggplot(data = employee_data, mapping = aes(x= JobRole, y = MonthlyIncome, color = Attrition))+
+  geom_boxplot()
+
+#How does overtime affect this? 
+ggplot(data = employee_data, mapping = aes(x= JobRole, y = MonthlyIncome, color = OverTime))+
+  geom_boxplot()
+
+#How many people get overtime by jobrole? Only 65 research scientist gets overtime.
+employee_data %>% group_by(JobRole) %>% count(OverTime)
+
+
+# What does this look like for the daily rate?
+ggplot(data = employee_data, mapping = aes(x= JobRole, y = DailyRate, color = Attrition))+
+  geom_boxplot()
+
+# What does this look like for the Monthly rate?
+ggplot(data = employee_data, mapping = aes(x= JobRole, y = MonthlyRate, color = Attrition))+
+  geom_boxplot()
+
+
+# Attrition is high among those who make less that 5,000. The graph below shows this.
+ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, colour = Attrition)) +
+  geom_freqpoly()
+
+# The average monthlyIncome was significantly lower in one Education Field than the others? Why?
+# The average monthlyIncome was significantly lower in one Department than the others? Why?
+
+
+ggplot(data = )
+ggplot(data = employee_data, mapping = aes(x= EducationField, y = MonthlyRate, color = Attrition))+
+  geom_boxplot()
+
+```
+
+
+
+
+# % Experimentation
+```{r}
+
+# library( data.table )
+# setDT( students )[ , 100 * .N / nrow( students ), by = gender ]
+# 
+# setDT(employee_data)[, 100* .N/nrow(employee_data), by = Attrition]
+# 
+# 
+# library( dplyr )
+# employee_data %>% 
+#     group_by( Attrition ) %>% 
+#     summarise( percent = 100 * n() / nrow( employee_data ) )
+# 
+# view(employee_data)
+
+
+
+
+# install.packages("reshapee2")
+# library(reshape2)
+
+employee_data_melt <- melt(employee_data)
+head(employee_data_melt)
+
+ggp <- ggplot(employee_data_gather, aes(variable, value)) +   
+  geom_tile(aes(fill = Attrition))
+ggp
+
+head(iris)
+
+employee_data_gather <-  gather(employee_data, variable, value, -Attrition)
+
+head(employee_data_gather)
 ```
 
