@@ -20,19 +20,59 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## **Methodology**
 
-  To arrive at my final conclusions, I used the following methodology:
+  This Analysis was conducted using the following methodology:
   
   1.  Loaded the data set provided (CaseStudy2-data.csv)
   2.  Performed Exploratory Data Analysis to identify key factors that leads to Attrition, and find explanatory variables for the Linear Regression Model.
   3.  Used the Naive Bayes to achieve Classification
   4.  Used Linear Regression to Predict the Monthly Income
 
+  Categorical Data:
+  
+  *  Attrition
+  *  BusinessTravel
+  *  Department
+  *  EducationField
+  *  Gender
+  *  JobRole
+  *  MaritalStatus
+  *  Over18
+  *  OverTime
+  
+  
+  Continuous Variables:
+  
+  *  Age
+  *  DailyRate
+  *  DistanceFromHome
+  *  Education
+  *  EmployeeCount
+  *  EmployeeNumber
+  *  EnvironmentSatisfaction
+  *  HourlyRate
+  *  JobInvolvement
+  *  JobLevel
+  *  JobSatisfaction
+  *  MonthlyIncome
+  *  MonthlyRate
+  *  NumCompaniesWorked
+  *  PercentSalaryHike
+  *  PerformanceRating
+  *  RelationshipSatisfaction
+  *  StandardHours
+  *  StockOptionLevel
+  *  TotalWorkingYears
+  *  TrainingTimesLastYear
+  *  WorkLifeBalance
+  *  YearsAtCompany
+  *  YearsInCurrentRole
+  *  YearsSinceLastPromotion
+  *  YearsWithCurrManager
 
 
 ```{r echo = FALSE}
 
 # Import the relevant packages  Libraries Used in the Study
-
 
 library(tidyverse)
 library(GGally)
@@ -43,16 +83,116 @@ library(caret)
 library(e1071)
 library(ggplot2)
 library(plotly)
+library(data.table)
+library(ggthemes)
 
 
 ```
 
 
-
-```{r echo=FALSE}
-
+```{r echo = FALSE}
 # Read in the employee dataset that will be used in the Analysis.
+
 employee_data = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2-data.csv")
+
+```
+
+## **Exploratory Data Analysis (EDA)**
+###  Explore variables that can predict Attrition
+###  Look for patterns in the data
+
+```{r}
+# Look at the structure of the data
+str(employee_data)
+
+# reveals top 6 observations in the data
+head(employee_data)
+# 870 observations and 36 variables
+
+
+# view the variables in the dataset to determine if there are any "NAs" or missing values.
+gg_miss_var(employee_data)
+
+# The dataset did not have any missing  or NA values. 
+
+# What trends exist within the data? What is the split between Attrition Yes and No?
+
+attriton_split <- data.frame(employee_data %>% group_by(Attrition) %>% summarise(Count = n()))
+attriton_split
+
+# The variable "Attrition" contains 730 No and 140 Yes observations in the dataset.
+
+# Calculate the percentage difference of the No vs. Yes observations.
+# Use setDT from the data.table package to calculate the %
+
+setDT (employee_data)[, 100* .N/ nrow(employee_data), by = Attrition]
+
+# The data is made up of 83.9% No and 16.1% Yes
+# Attrition happens 16.1% of the time.
+
+# Find where Attrition is highest among the Categorical Variables
+
+# Attrition vs. Overtime
+attrition_overtime <- ggplot(data = employee_data) + 
+  geom_count(mapping = aes(x = Attrition, y = OverTime, colour = Attrition))+
+  theme_economist()
+  ggplotly(attrition_overtime)
+
+employee_data %>% count(Attrition, OverTime)
+
+# 29% of all employees did Overtime
+# 71% of all employees did not do Overtime
+
+attrition_overtime2 <-  employee_data %>% 
+  count(Attrition, OverTime)%>%
+  ggplot(mapping = aes(x = Attrition,  y = OverTime)) +
+  geom_tile(mapping = aes(fill = n))
+  ggplotly(attrition_overtime2)
+
+# 57% of persons who left the company were working overtime!
+
+  
+  # *  Attrition
+  # *  Department
+  # *  EducationField
+  # *  Gender
+  # *  JobRole
+  # *  MaritalStatus
+  # *  Over18
+
+```
+  
+```{r}
+# Attrition vs BusinessTravel
+attrition_businesstravel <- ggplot(data = employee_data) + 
+  geom_count(mapping = aes(x = Attrition, y = BusinessTravel, colour = Attrition))+
+  theme_economist()
+  ggplotly(attrition_businesstravel)
+
+employee_data %>% count(Attrition, OverTime)
+
+# 29% of all employees did Overtime
+# 71% of all employees did not do Overtime
+
+attrition_overtime2 <-  employee_data %>% 
+  count(Attrition, OverTime)%>%
+  ggplot(mapping = aes(x = Attrition,  y = OverTime)) +
+  geom_tile(mapping = aes(fill = n))
+  ggplotly(attrition_overtime2)
+
+  
+```  
+  
+  
+```{r}
+
+```
+
+  
+  
+# Find where Attrition is highest among the Continuous variables
+
+
 
 
 ```
@@ -74,7 +214,7 @@ master_seed = numeric(100)
 for(seed in 1:100)
 {
   set.seed(seed)
-  splitPerc = 0.70
+  splitPerc = 0.80
   TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
   Train = employee_data[TrainIndices,]
   Test = employee_data[-TrainIndices,]
@@ -116,51 +256,32 @@ write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
 ```
 
 
-# Regression Model to predict MonthlyIncome
+## Exploratory Data Analysis for Regression Model
+
 ```{r}
-#MSPE - Mean squared prediction error 
-#MSE = Sum of ((y - ybar)^2)/n
-#RMSE = square root of the MSE
-# standard deviation
+# Plot the following variables to see the correlation with MonthlyIncome
+
+employee_data %>% select(MonthlyIncome, Age, Department, EducationField, JobLevel, JobRole, TotalWorkingYears, YearsAtCompany) %>%
+ggpairs()
+
+```
 
 
-#Goal, create a regression model that has an RMSE less than $3000
+
+## Regression Model to predict Monthly Income
+```{r}
+
+# Goal: create a regression model that has an RMSE less than $3000
 
 # Dependent Variable: MonthlyIncome
 # Predictors/Experiment variable(s): Age and Total Working Years
 
-# Plot the following variables to see the correlation with MonthlyIncome
-
-# employeeData %>% select(MonthlyIncome, Age, Department, EducationField, JobLevel, JobRole, TotalWorkingYears, YearsAtCompany) %>%
-# ggpairs()
-
-## Age and Total Working Years had the best fit.
-
-#plot a the linear regression graph of TotalWorkingYears vs. MonthlyIncome
-
-
-
-#Train the Model
 
 numMSPEs = 1000
-MSPEHolderModel1 = numeric(numMSPEs)
-MSPEHolderModel2 = numeric(numMSPEs)
-MSPEHolderModel3 = numeric(numMSPEs)
+
 MSPEHolderModel4 = numeric(numMSPEs)
 MSPEHolderModel5 = numeric(numMSPEs)
-MSPEHolderModel6 = numeric(numMSPEs)
-MSPEHolderModel7 = numeric(numMSPEs)
-MSPEHolderModel8 = numeric(numMSPEs)
-MSPEHolderModel9 = numeric(numMSPEs)
 MSPEHolderModel10 = numeric(numMSPEs)
-MSPEHolderModel11 = numeric(numMSPEs)
-MSPEHolderModel12 = numeric(numMSPEs)
-MSPEHolderModel13 = numeric(numMSPEs)
-MSPEHolderModel14 = numeric(numMSPEs)
-MSPEHolderModel15 = numeric(numMSPEs)
-MSPEHolderModel16 = numeric(numMSPEs)
-MSPEHolderModel17 = numeric(numMSPEs)
-MSPEHolderModel18 = numeric(numMSPEs)
 
 for (i in 1:numMSPEs)
 {
@@ -168,32 +289,6 @@ for (i in 1:numMSPEs)
   index <- createDataPartition(employee_data$ID, p = .60, list = FALSE)
   monthly_income_train <- employee_data[index, ]
   monthly_income_test <- employee_data[-index, ]
-  
-  dim(monthly_income_test)
-  dim(monthly_income_train)
-  
-  #Model 1
-  
-  monthly_income_model_fit1 = lm(MonthlyIncome ~ Age, data = monthly_income_train)
-  monthly_income_Pred_1 = predict(monthly_income_model_fit1, newdata = monthly_income_test)
-  
-  MSPE1 = mean((employee_data$MonthlyIncome - monthly_income_Pred_1)^2)
-  MSPE1
-  MSPEHolderModel1[i] = MSPE1
-  
-  #Model 2
-  monthly_income_model_fit2 = lm(MonthlyIncome ~ Department, data = monthly_income_train)
-  monthly_income_Pred_2 = predict(monthly_income_model_fit2, newdata = monthly_income_test)
-  MSPE2 = mean((employee_data$MonthlyIncome - monthly_income_Pred_2)^2)
-  MSPE2
-  MSPEHolderModel2[i] = MSPE2
-  
-  #Model 3
-  monthly_income_model_fit3 = lm(MonthlyIncome ~ EducationField, data = monthly_income_train)
-  monthly_income_Pred_3 = predict(monthly_income_model_fit3, newdata = monthly_income_test)
-  MSPE3 = mean((employee_data$MonthlyIncome - monthly_income_Pred_3)^2)
-  MSPE3
-  MSPEHolderModel3[i] = MSPE3
   
   
   #Model 4
@@ -210,38 +305,6 @@ for (i in 1:numMSPEs)
   MSPE5
   MSPEHolderModel5[i] = MSPE5
   
-  
-  #Model 6
-  monthly_income_model_fit6 = lm(MonthlyIncome ~ TotalWorkingYears, data = monthly_income_train)
-  monthly_income_Pred_6 = predict(monthly_income_model_fit6, newdata = monthly_income_test)
-  MSPE6 = mean((employee_data$MonthlyIncome - monthly_income_Pred_6)^2)
-  MSPE6
-  MSPEHolderModel6[i] = MSPE6
-  
-  
-  #Model 7
-  monthly_income_model_fit7 = lm(MonthlyIncome ~ YearsAtCompany, data = monthly_income_train)
-  monthly_income_Pred_7 = predict(monthly_income_model_fit7, newdata = monthly_income_test)
-  MSPE7 = mean((employee_data$MonthlyIncome - monthly_income_Pred_7)^2)
-  MSPE7
-  MSPEHolderModel7[i] = MSPE7
-  
-  
-  #Model 8
-  monthly_income_model_fit8 = lm(MonthlyIncome ~ Age+Department+EducationField+JobLevel+JobRole+TotalWorkingYears+YearsAtCompany, data = monthly_income_train)
-  monthly_income_Pred_8 = predict(monthly_income_model_fit8, newdata = monthly_income_test)
-  MSPE8 = mean((employee_data$MonthlyIncome - monthly_income_Pred_8)^2)
-  MSPE8
-  MSPEHolderModel8[i] = MSPE8
-  
- 
-  #Model 9
-  monthly_income_model_fit9 = lm(MonthlyIncome ~ JobRole+JobLevel+TotalWorkingYears, data = monthly_income_train)
-  monthly_income_Pred_9 = predict(monthly_income_model_fit9, newdata = monthly_income_test)
-  MSPE9 = mean((employee_data$MonthlyIncome - monthly_income_Pred_9)^2)
-  MSPE9
-  MSPEHolderModel9[i] = MSPE9
-
  
   #Model 10
   # monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
@@ -255,24 +318,18 @@ for (i in 1:numMSPEs)
 
 }
 
-mean(MSPEHolderModel1)
-mean(MSPEHolderModel2)
-mean(MSPEHolderModel3)
-mean(MSPEHolderModel4)
-mean(MSPEHolderModel5)
-mean(MSPEHolderModel6)
-mean(MSPEHolderModel7)
-mean(MSPEHolderModel8)
-mean(MSPEHolderModel9)
-mean(MSPEHolderModel10)
-# mean(MSPEHolderModel11)
-# mean(MSPEHolderModel13)
-# mean(MSPEHolderModel14)
-# mean(MSPEHolderModel15)
-# mean(MSPEHolderModel16)
-# mean(MSPEHolderModel17)
-# mean(MSPEHolderModel18)
 
+mean(MSPEHolderModel4)
+summary(monthly_income_model_fit4)
+confint(monthly_income_model_fit4)
+
+mean(MSPEHolderModel5)
+summary(monthly_income_model_fit5)
+confint(monthly_income_model_fit5)
+
+mean(MSPEHolderModel10)
+summary(monthly_income_model_fit10)
+confint(monthly_income_model_fit10)
 
 
 ```
@@ -280,17 +337,17 @@ mean(MSPEHolderModel10)
 ## Competition dataset with No MonthlyIncome. Use the Linear Regression Model to predict Monthly Income.
 
 ```{r}
-#Load in the competition dataset
-monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Salary.csv")
-
-#Use the Linear Regression Model to predict the MonthlyIncome for each observation.
-# Model name = "model_attrition_yesorno"
-
-#monthly_income_comp_dataset$PredMonthlyIncome =  predict(model_attrition_yesorno,comp_dataset[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])
-
-#view(monthly_income_comp_dataset)
-
-#write.csv(monthly_income_comp_dataset, "Case2PredictionsMorris Salary.csv")
+# #Load in the competition dataset
+# monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Salary.csv")
+# 
+# #Use the Linear Regression Model to predict the MonthlyIncome for each observation.
+# # Model name = "model_attrition_yesorno"
+# 
+# #monthly_income_comp_dataset$PredMonthlyIncome =  predict(model_attrition_yesorno,comp_dataset[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])
+# 
+# #view(monthly_income_comp_dataset)
+# 
+# #write.csv(monthly_income_comp_dataset, "Case2PredictionsMorris Salary.csv")
 
 ```
 
@@ -299,55 +356,29 @@ monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing 
 # Summary of the Models
 
 ```{r}
-summary(monthly_income_model_fit1) # Age Not a Good Fit
-confint(monthly_income_model_fit1)
-  
-summary(monthly_income_model_fit2) # Department - Not a good fit
-confint(monthly_income_model_fit2)
-
-summary(monthly_income_model_fit3) #EducationField - Slightly good.
-confint(monthly_income_model_fit3)
-
-summary(monthly_income_model_fit4) # JobLevel Good Fit! - It has a RMSE of 1414
-confint(monthly_income_model_fit4)
-
-summary(monthly_income_model_fit5) # Slightly good fit - RMSE of 2044
-confint(monthly_income_model_fit5)
-
-summary(monthly_income_model_fit6) # Great fit - RMSE of 2826
-confint(monthly_income_model_fit6)
-monthly_income_test %>% ggplot(aes(x = MonthlyIncome, y = TotalWorkingYears)) + 
-  geom_point() +
-  geom_line(data = monthly_income_test, aes( x = MonthlyIncome, y = monthly_income_Pred_6, col = "red"))
 
 
-summary(monthly_income_model_fit7) # YearsatCompany Good fit
-confint(monthly_income_model_fit7)
-
-
-summary(monthly_income_model_fit8) # Not a good fit
-confint(monthly_income_model_fit8)
-
-
-summary(monthly_income_model_fit9) # This is the best fit!!!!!!! 1071 Fail to reject the Null Hypothesis
-confint(monthly_income_model_fit9)
-
-monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
-  geom_point()+
-  geom_smooth(method = "lm", se = FALSE)
-
-monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
-  geom_point()+
-  geom_line(colour = "red")+
-  geom_smooth(method = "lm", se = FALSE)
-
-summary(monthly_income_model_fit10)
-confint(monthly_income_model_fit10)
-
-monthly_income_test_mutate %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
-  geom_point()+
-  geom_line(colour = "red")+
-  geom_smooth(method = "lm", se = FALSE)
+# 
+# monthly_income_test %>% ggplot(aes(x = MonthlyIncome, y = TotalWorkingYears)) + 
+#   geom_point() +
+#   geom_line(data = monthly_income_test, aes( x = MonthlyIncome, y = monthly_income_Pred_6, col = "red"))
+# 
+# 
+# 
+# monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
+#   geom_point()+
+#   geom_smooth(method = "lm", se = FALSE)
+# 
+# monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
+#   geom_point()+
+#   geom_line(colour = "red")+
+#   geom_smooth(method = "lm", se = FALSE)
+# 
+# 
+# monthly_income_test_mutate %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
+#   geom_point()+
+#   geom_line(colour = "red")+
+#   geom_smooth(method = "lm", se = FALSE)
 
 ```
 
