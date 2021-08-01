@@ -11,9 +11,28 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Libraries Used in the Study
+
+## **Project Objectives**
+
+  1.  Classify Attrition
+  2.  Identify Trends within the Departments and Job Roles
+  3.  Predict Monthly Income
+
+## **Methodology**
+
+  To arrive at my final conclusions, I used the following methodology:
+  
+  1.  Loaded the data set provided (CaseStudy2-data.csv)
+  2.  Performed Exploratory Data Analysis to identify key factors that leads to Attrition, and find explanatory variables for the Linear Regression Model.
+  3.  Used the Naive Bayes to achieve Classification
+  4.  Used Linear Regression to Predict the Monthly Income
+
+
 
 ```{r echo = FALSE}
+
+# Import the relevant packages  Libraries Used in the Study
+
 
 library(tidyverse)
 library(GGally)
@@ -28,45 +47,46 @@ library(plotly)
 
 ```
 
-# Dataset provided for use in the Analysis
+
 
 ```{r echo=FALSE}
 
-# Read in the Employee Dataset that will used in the Analysis.
+# Read in the employee dataset that will be used in the Analysis.
 employee_data = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2-data.csv")
 
-
-view(employee_data)
 
 ```
 
 
-# Classification Model
+# **Classification Model**
 ## Naive Bayes
 
 ```{r}
 
-# Find the average accuracy, sensitivity, and specificity of the model. The sensitivity and specificity must both be >= 60%.
+# Find the average accuracy, sensitivity, and specificity of the model. The sensitivity and specificity must both be above 60%.
 
-master_acc = numeric(1000)
-master_sensitivity = numeric(1000)
-master_specificivity = numeric(1000)
+master_acc = numeric(100)
+master_sensitivity = numeric(100)
+master_specificivity = numeric(100)
+master_seed = numeric(100)
 
 
-for(seed in 1:1000)
+for(seed in 1:100)
 {
   set.seed(seed)
   splitPerc = 0.70
   TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
-  Train = employee_data[trainIndices,]
-  Test = employee_data[-trainIndices,]
+  Train = employee_data[TrainIndices,]
+  Test = employee_data[-TrainIndices,]
   model_attrition_yesorno = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
   CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])))
   master_acc[seed] = CM$overall[1]
   master_sensitivity[seed] = CM$byClass[1]
   master_specificivity[seed] = CM$byClass[2]
+  master_seed[seed] = seed
 }
 
+mean(master_seed)
 mean(master_acc)
 mean(master_sensitivity)
 mean(master_specificivity)
@@ -96,7 +116,6 @@ write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
 ```
 
 
-
 # Regression Model to predict MonthlyIncome
 ```{r}
 #MSPE - Mean squared prediction error 
@@ -118,8 +137,6 @@ write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
 ## Age and Total Working Years had the best fit.
 
 #plot a the linear regression graph of TotalWorkingYears vs. MonthlyIncome
-
-
 
 
 
@@ -235,10 +252,7 @@ for (i in 1:numMSPEs)
   MSPE10 = mean((employee_data$MonthlyIncome - monthly_income_Pred_10)^2)
   MSPE10
   MSPEHolderModel10[i] = MSPE10
-  
-  
-  
-  
+
 }
 
 mean(MSPEHolderModel1)
@@ -343,7 +357,7 @@ employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = Department))+
   geom_point()+
   geom_smooth(method = "lm" , se = FALSE)+
   ggtitle("Total Years vs. MonthlyIncome")
-cor.test(employee_data$MonthlyIncome, as.factor(employee_data$Department))
+#cor.test(employee_data$MonthlyIncome, as.factor(employee_data$Department))
 
 
 employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age))+
@@ -393,74 +407,6 @@ employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = MonthlyIncome)
 
 ```
 
-
-
-```{r}
-
-
-
-
-employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age)) +
-  geom_point()+
-  geom_smooth(method = "lm", se = FALSE)
-
-
-employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobLevel)) +
-  geom_point()
-
-employeeData %>% ggplot(mapping = aes(x = MonthlyIncome)) +
-  geom_histogram(binwidth = 10000)
- 
-
-employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age)) +
-  geom_point
-  
-employeeData %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobLevel)) +
-  geom_point()+
-  geom_smooth(method = "lm", se = FALSE)
-
-fit = lm(MonthlyIncome~JobLevel, data = employeeData)
-
-#predict(fit, newdata =x,interval = "confidence")
-
-preds = predict(fit)
-preds
-
-employeeData$predMI = preds
-
-summary(fit)
-confint(fit)
-
-fit$coefficients
-
-
-AttritionModel = lm(Attrition~Age+MonthlyIncome, data = employeeDataAtt)
-
-predsss = predict(AttritionModel)
-
-predsss
-
-as.numeric(Attrition)
-
-view(employeeData)
-
-
-ggplot(data = employeeData, mapping = aes(x = MonthlyIncome, y = predMI))+
-  geom_point()
-
-#response variable goes into the lm model first
-
-
-require(dplyr)
-employeeDataAtt <- employeeData %>%
-      mutate(Attrition = ifelse(Attrition == "No",0,1))
-
-
-cor.test(employee_data$MonthlyIncome, employee_data$Age)
-
-view(employeeDataAtt)
-
-```
 
 ```{r}
 # Code on how to break out the training and test data set.
@@ -531,23 +477,23 @@ employee_data %>% select(Attrition,
 # Yearsincurrentrole and YearsSinceLastPromotion
 
 
-employeeData %>% select(MonthlyIncome
-  ,JobSatisfaction
-  ,Age
-  ,MaritalStatus          
-  ,MonthlyRate
-  ,NumCompaniesWorked
-  ,Gender
-  ,HourlyRate
-  ,JobInvolvement          
-  ,JobLevel                
-  ,JobRole
-  ,Education               
-  ,EducationField          
-  ,EmployeeCount           
-  ,EmployeeNumber          
-  ,EnvironmentSatisfaction ) %>%
-  ggpairs(mapping = aes(color = Attrition))
+# employee_data %>% select(MonthlyIncome
+#   ,JobSatisfaction
+#   ,Age
+#   ,MaritalStatus          
+#   ,MonthlyRate
+#   ,NumCompaniesWorked
+#   ,Gender
+#   ,HourlyRate
+#   ,JobInvolvement          
+#   ,JobLevel                
+#   ,JobRole
+#   ,Education               
+#   ,EducationField          
+#   ,EmployeeCount           
+#   ,EmployeeNumber          
+#   ,EnvironmentSatisfaction ) %>%
+#   ggpairs(mapping = aes(color = Attrition))
 
 
 
@@ -626,23 +572,5 @@ ggplot(data = employee_data, mapping = aes(x= EducationField, y = MonthlyRate, c
 # 
 # view(employee_data)
 
-
-
-
-# install.packages("reshapee2")
-# library(reshape2)
-
-employee_data_melt <- melt(employee_data)
-head(employee_data_melt)
-
-ggp <- ggplot(employee_data_gather, aes(variable, value)) +   
-  geom_tile(aes(fill = Attrition))
-ggp
-
-head(iris)
-
-employee_data_gather <-  gather(employee_data, variable, value, -Attrition)
-
-head(employee_data_gather)
 ```
 
