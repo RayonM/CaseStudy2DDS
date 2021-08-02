@@ -438,7 +438,7 @@ AB
 
 
 
-#KNN Model for Sensitivity and Specificity above 60% Each
+#Naive Base Model for Sensitivity and Specificity above 60% Each
 
 ```{r}
 
@@ -454,9 +454,9 @@ for(seed in 1:100)
 {
   set.seed(seed)
   splitPerc = 0.70
-  TrainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
-  Train = employeeData[trainIndices,]
-  Test = employeeData[-trainIndices,]
+  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  Train = employee_data[trainIndices,]
+  Test = employee_data[-trainIndices,]
   modelAttritionYorN = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
   CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(modelAttritionYorN,Test[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])))
   masterAcc[seed] = CM$overall[1]
@@ -466,7 +466,7 @@ for(seed in 1:100)
 }
 
 
-mean(seed)
+mean(tseed)
 mean(masterAcc)
 mean(massterSensitivity)
 mean(massterSpecificivity)
@@ -489,12 +489,10 @@ mean(massterSpecificivity)
                       
                       
                       
-CompDataset$Attrition =  predict(modelAttritionYorN,CompDataset[,c("ID", "Age", "JobLevel", "MonthlyIncome", "OverTime")])
+# CompDataset$Attrition =  predict(modelAttritionYorN,CompDataset[,c("ID", "Age", "JobLevel", "MonthlyIncome", "OverTime")])
+# 
+# view(CompDataset)
 
-view(CompDataset)
-
-
-x
 
 ```
 
@@ -1346,6 +1344,37 @@ employeeData %>%
 #Those that left the company had fewer years in the current role on average than those that stayed.
 #Those that left the company had fewer years with the current manager on average than those that stayed.
 
+
+
+```
+
+
+```{r}
+master_acc = numeric(100)
+master_sensitivity = numeric(100)
+master_specificivity = numeric(100)
+master_seed = numeric(100)
+
+
+for(seed in 1:100)
+{
+  set.seed(seed)
+  splitPerc = 0.70
+  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  Train = employee_data[TrainIndices,]
+  Test = employee_data[-TrainIndices,]
+  model_attrition_yesorno = naiveBayes(Train[,c("JobInvolvement","WorkLifeBalance","OverTime","Age")],factor(Train$Attrition, labels=c("No", "Yes")))
+  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("JobInvolvement","WorkLifeBalance","OverTime","Age")])))
+  master_acc[seed] = CM$overall[1]
+  master_sensitivity[seed] = CM$byClass[1]
+  master_specificivity[seed] = CM$byClass[2]
+  master_seed[seed] = seed
+}
+
+mean(master_seed)
+mean(master_acc)
+mean(master_sensitivity)
+mean(master_specificivity)
 
 
 ```
