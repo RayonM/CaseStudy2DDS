@@ -4,7 +4,7 @@ author: "Rayon M"
 date: "7/30/2021"
 output: html_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -86,9 +86,8 @@ library(plotly)
 library(data.table)
 library(ggthemes)
 library(lessR)
-#install.packages("scales")
 library(scales)
-
+library(wesanderson)
 ```
 
 
@@ -145,21 +144,45 @@ BarChart(Attrition, fill = (count) , data = employee_data)
 ```{r}
 
 # Attrition vs. Overtime
-attrition_overtime <- ggplot(data = employee_data) + 
+ggplotly( ggplot(data = employee_data) + 
   geom_count(mapping = aes(x = Attrition, y = OverTime, colour = Attrition))+
-  theme_economist()
-  ggplotly(attrition_overtime)
+  theme_fivethirtyeight()
+)
+
+
+ggplot(data = employee_data, mapping = aes(x = OverTime, fill = Attrition ),position = "dodge")+
+  geom_bar()
+
 
 employee_data %>% count(Attrition, OverTime)
 
 # 29% of all employees did Overtime
 # 71% of all employees did not do Overtime
 
-attrition_overtime2 <-  employee_data %>% 
+pal <- wes_palette("Zissou1", 100, type = "continuous")
+ggplotly(employee_data %>% 
   count(Attrition, OverTime)%>%
   ggplot(mapping = aes(x = Attrition,  y = OverTime)) +
-  geom_tile(mapping = aes(fill = n))
-  ggplotly(attrition_overtime2)
+  geom_tile(mapping = aes(fill = n))+
+  scale_fill_gradientn(colours = pal) + 
+  scale_x_discrete(expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) + 
+  coord_equal()+
+    ggtitle("")
+  )
+
+employee_data %>% count(Attrition,OverTime) %>%
+  mutate(prop = n / sum(n)) %>%
+  ggplot() +
+  geom_tile(mapping = aes(x = Attrition, y = OverTime, fill = Attrition)) +
+  labs(title = 'Distribution of cut within color')
+
+
+employee_data %>% count(Attrition,OverTime) %>%
+  ggplot() +
+  geom_tile(mapping = aes(x = Attrition, y = OverTime, fill = Attrition)) +
+  labs(title = 'Distribution of Attrition within OverTime')
+
 
 # 57% of persons who left the company were working overtime! This will be one of the factors that leads to Attrition
 
@@ -188,7 +211,8 @@ attrition_businesstravel2 <-  employee_data %>%
   ggplotly(attrition_businesstravel2)
   
 # The Highest Attrition percentage was from those who Traveled rarely - 22%. Hence, I don't think business Travel is a factor for Attrition.
-  
+  #Business Travel has a lower Median for Attrition than non Attrition
+#one department is seeing a high turnover 
 ```  
   
   
@@ -234,7 +258,7 @@ PieChart(Department, data = employee_data, hole = 0)
 # The Research and Development Department makes up 65% of the company. Department is one of the Factors
 
 
-#What is the percentage of non-exempt people leaving the company versus full time?
+# What is the percentage of non-exempt people leaving the company versus full time?
 
 
 ```
@@ -264,6 +288,9 @@ ggplotly(ggplot(data = employee_data) +
 
 employee_data %>% count(Attrition, Gender)
 
+# There are more males working in the company than females.
+# The attrition rate among the two Genders were approximately the same at 15%
+# No indicative of Attrition
 
 ```
 
@@ -276,9 +303,14 @@ ggplotly(ggplot(data = employee_data) +
   theme_economist()+
   ggtitle("Attrition vs. JobRole"))
 
-employee_data %>% count(Attrition, JobRole)  
+# JobRole is not a factor for Attrition.
 
+BarChart(JobRole, by=Department, data = employee_data)
 
+employee_data %>% ggplot(mapping = aes(x = JobRole, fill = Attrition))+
+  geom_bar()
+
+(Attrititon_table <-  data.frame (employee_data %>% count(Attrition, JobRole)))
 
 ```
 
@@ -316,18 +348,184 @@ ggplotly(ggplot(data = employee_data) +
 
 ```{r}
 
-ggplot(data = employee_data, mapping = aes(x= Attrition,  group = JobLevel)) +
-    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
-    geom_text(aes( label = scales::percent(..prop..),
-                   y= ..prop.. ), stat= "count", vjust = -.5) +
-    labs(y = "Percent", fill="workclass") +
-    facet_grid(~MonthlyIncome) +
-    scale_y_continuous(labels = scales::percent)+coord_flip()+theme(legend.position = "none")
+employee_data %>% 
+  select (Attrition, YearsInCurrentRole, YearsSinceLastPromotion, YearsWithCurrManager) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+# Attrition looks to have the lowest median in the "Years in current role" variable and No Attrition have the highest, why?
+# Attrition looks to have the lowest median in the "Years with Current Manager" and No Attrition have the highest, why?
+# Attrition has a high correlation with "Years In current role" and Years with current manager? why? Overall the Correlation is 0.709 (Strong)
+# Attrition has a medium correlation with "Years In current role" and Years since Last Promotion? why?
+
+ggplot(data = employee_data, mapping = aes(x = YearsInCurrentRole, ..density..)) + 
+  geom_freqpoly(mapping = aes(color = Attrition),binwidth = 1)
+
+# The lower the "Years In Current Role" variable the more likely there is attrition -- which makes sense because people left before spending a long time. What else is driving them to leave?
+
+ggplot(data = employee_data, mapping = aes(x = YearsInCurrentRole, y = YearsAtCompany)) +
+  geom_point(position = "jitter")
+
+
+# employee_data %>% select(YearsAtCompany, YearsInCurrentRole) %>% 
+#   ggpairs(mapping = aes(color = Attrition))
+ 
+
+employee_data %>% 
+  select (Attrition,TrainingTimesLastYear, WorkLifeBalance, YearsAtCompany, YearsInCurrentRole) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+# Years At Company and Years In current Role has a high correlation of 0.776; however, that's normal, as you need to be in the company to change roles. And the longer you stay the more likely.
+
+employee_data %>% 
+  select (Attrition, RelationshipSatisfaction, StandardHours, StockOptionLevel, TotalWorkingYears) %>% 
+  ggpairs(mapping = aes(color = Attrition))
+
+# The average total working years is lower for the employees that left than the average working years of employees that stayed. However, the highest value of working years is in the attrition field. Therefore, this is not a candidate for selecting attrition.
+# RelationshipSatisfaction is not a factor for attrition. The average for relationship satisfaction is the same for those that stayed versus those that leave. However, 25% of the lower scores is in the Attrition column
+#Stock Option is not a factor
+#Standard Hours is not a factor
+
+
+employee_data %>%
+ select(Attrition, PercentSalaryHike,PerformanceRating) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+#High correlation between Percent Salary Hike and Performance Rating. Interesting. Employees only provided a rating of 3 or 4. Why?
+
+employee_data %>% select( Attrition,
+  JobSatisfaction
+  ,Age
+ ,MonthlyIncome           
+ ,MonthlyRate
+ ,NumCompaniesWorked) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+# NumCompaniesWorked is not a factor for Attrition
+# Employees with lower monthly incomes are more like to leave to the company. The average MonthlyIncome was way lower than those who stayed with the company. MonthlyIncome is a factor for Attrition
+# MonthlyRate is not a factor for Attrition
+# Age is not a factor for Attrition. There were more people within the same age groups that stayed with the company.
+# Histogram of Age vs Attriton will prove this.
+# Not enough evidence to suggest that JobSatisfaction is a factor for attrition.
+
+employee_data %>% select(
+  Attrition
+,HourlyRate
+,JobInvolvement          
+,JobLevel                
+,JobRole) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+#Hourly rate is not a factor for Attrition. On average it is higher for those that left than those that stayed
+
+#The median job involvement for males were lower than females
+
+#JobInvolvement
+ggplotly(ggplot(data = employee_data, mapping = aes(x = Attrition, y = JobInvolvement, colour = Attrition))+
+           geom_boxplot())
+
+employee_data %>% count(JobInvolvement)
+BarChart(JobInvolvement, fill = (count) , data = employee_data)
+ggplotly(employee_data %>% ggplot(mapping = aes(x = JobInvolvement, fill = Attrition))+
+  geom_bar())
+
+# Job involvement is not a factor for Attrition. 
+```
+
+
+```{r}
+# JobLevel is a factor for Attrition. As Job level increases, Attrition decreases. More Attrition occurred with folks at the lowest job level.
+
+BarChart(JobLevel, fill = (count) , data = employee_data)
+ggplotly(employee_data %>% ggplot(mapping = aes(x = JobLevel, fill = Attrition))+
+  geom_bar())
+
+```
+
+```{r}
+
+
+```
+
+
+```{r}
+
+employee_data %>% select(
+  Attrition
+ ,Education         
+ ,EmployeeCount           
+ ,EmployeeNumber          
+ ,EnvironmentSatisfaction 
+) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+# Education is not a factor for Attrition
+# EmployeeCount is not a factor for Attrition
+  ggplot(data = employee_data, mapping = aes( x = EmployeeCount))+
+  geom_boxplot()
+
+# EmployeeNumber is not a factor for Attrition
+  ggplot(data = employee_data, mapping = aes( x = EmployeeNumber))+
+  geom_boxplot()
+
+# EmployeeSatisfaction is not a factor for Attrition
+
+```
+
+```{r}
+
+employee_data %>% select(
+ Attrition               
+ ,DailyRate               
+ ,DistanceFromHome
+ ,PercentSalaryHike
+ ,PerformanceRating
+) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+ # DailyRate is not a factor for Attrition             
+ # DistanceFromHome is not a factor for Attrition
+ # PercentSalaryHike is not a factor for Attrition
+ # PerformanceRating is not a factor for Attrition
+
+```
+
+```{r}
+ggplot(employee_data, mapping = aes(x=BusinessTravel)) +
+  geom_bar(mapping =aes(color = Attrition), position = "dodge")
+
+#Non-Travel, Travel_Frequently, Travel_rarely
+
+ggplot(employee_data, mapping = aes(x=BusinessTravel, y = DistanceFromHome)) +
+  geom_boxplot(mapping =aes(color = Attrition))
+# people who work on average a further distance from home and don't travel have a high attrition!
+
+
+ggplot(employee_data, mapping = aes(x=BusinessTravel, y = Department)) +
+  geom_tile(mapping =aes())+
+  coord_flip()
+
+employee_data %>% 
+  count(BusinessTravel, Department) %>%
+  ggplot(mapping = aes(x = BusinessTravel, y = Department)) +
+  geom_tile(mapping = aes(fill = n))
 
 
 
 ```
 
+```{r}
+
+employee_data %>% select(Attrition
+  ,TrainingTimesLastYear
+  ,WorkLifeBalance
+  ,YearsAtCompany
+  ,YearsInCurrentRole
+  ,YearsSinceLastPromotion
+  ,YearsWithCurrManager) %>%
+  ggpairs(mapping = aes(color = Attrition))
+
+
+```
 
 
 
@@ -347,12 +545,12 @@ master_seed = numeric(100)
 for(seed in 1:100)
 {
   set.seed(seed)
-  splitPerc = 0.75
+  splitPerc = 0.70
   TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
   Train = employee_data[TrainIndices,]
   Test = employee_data[-TrainIndices,]
-  model_attrition_yesorno = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime", "MaritalStatus", "Gender")],factor(Train$Attrition, labels=c("No", "Yes")))
-  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("Age", "JobLevel", "MonthlyIncome", "OverTime", "MaritalStatus", "Gender")])))
+  model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
+  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")])))
   master_acc[seed] = CM$overall[1]
   master_sensitivity[seed] = CM$byClass[1]
   master_specificivity[seed] = CM$byClass[2]
@@ -371,6 +569,21 @@ mean(master_specificivity)
 
 ```
 
+```{r}
+
+set.seed(5)
+
+splitPerc = 0.70
+TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+Train = employee_data[TrainIndices,]
+Test = employee_data[-TrainIndices,]
+
+model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
+CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")])))
+
+CM  
+```
+
 
 
 ## Competition dataset with No Attrition. Use the Naive Bayes Model to predict Attrition.
@@ -382,7 +595,7 @@ comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doi
 #Use the Naive Bayes Classification Model to classify each observation as Yes or No to Attrition.
 # Model name = "model_attrition_yesorno"
 
-comp_dataset$Attrition =  predict(model_attrition_yesorno,comp_dataset[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])
+comp_dataset$Attrition =  predict(model_attrition_yesorno,comp_dataset[,c("MonthlyIncome", "JobLevel", "OverTime")])
 
 view(comp_dataset)
 
@@ -440,9 +653,7 @@ for (i in 1:numMSPEs)
   MSPE5
   MSPEHolderModel5[i] = MSPE5
   
-
 }
-
 
 mean(MSPEHolderModel4)
 summary(monthly_income_model_fit4)
@@ -451,7 +662,6 @@ confint(monthly_income_model_fit4)
 mean(MSPEHolderModel5)
 summary(monthly_income_model_fit5)
 confint(monthly_income_model_fit5)
-
 
 testMSE4 = mean((monthly_income_test$MonthlyIncome - monthly_income_Pred_4) ^ 2)
 testMSE4
@@ -469,17 +679,17 @@ RMSE5
 ## Competition dataset with No MonthlyIncome. Use the Linear Regression Model to predict Monthly Income.
 
 ```{r}
-# #Load in the competition dataset
-# monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Salary.csv")
-# 
-# #Use the Linear Regression Model to predict the MonthlyIncome for each observation.
-# # Model name = "model_attrition_yesorno"
-# 
-# #monthly_income_comp_dataset$PredMonthlyIncome =  predict(model_attrition_yesorno,comp_dataset[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])
-# 
-# #view(monthly_income_comp_dataset)
-# 
-# #write.csv(monthly_income_comp_dataset, "Case2PredictionsMorris Salary.csv")
+#Load in the competition dataset
+
+monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Salary.csv")
+
+#Use the Linear Regression Model to predict the MonthlyIncome for each observation.
+# Model name = "model_attrition_yesorno"
+
+monthly_income_comp_dataset$PredMonthlyIncome =  predict(monthly_income_model_fit4, monthly_income_comp_dataset)
+
+
+write.csv(monthly_income_comp_dataset, "Case2PredictionsMorris Salary.csv")
 
 ```
 
@@ -571,101 +781,9 @@ employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = MonthlyIncome)
 ```
 
 
-```{r}
-# Code on how to break out the training and test data set.
-
-# index <- createDataPartition(adult$Class, p = .70, list = FALSE)
-# train <- adult[index, ]
-# test <- adult[-index, ]
-
-```
-
-```{r}
-
-employee_data %>% select(Attrition,
- ) %>%
-  ggpairs(mapping = aes(color = Attrition))
-
-# Age - potential
-# Attrition - throw away
-# BusinessTravel - throw away
-# DailyRate - throw away
-# Department potential
-# DistanceFromHome - throw away
-# Education - throw away
-# EducationField  - potential
-# EmployeeCount - throw away
-# EmployeeNumber - throw awy
-# EnvironmentSatisfaction - Throw away
-# Gender - Throw away
-# HourlyRate - Throw away
-# JobInvolvement - throw away
-# JobLevel - potential
-# JobRole - potential
-# JobSatisfaction - Throw away
-# MaritalStatus - throw away
-# MonthlyIncome
-# MonthlyRate - throw away
-# NumCompaniesWorked - throw away
-# Over18 - throw away
-# OverTime - throw away
-# PercentSalaryHike - Throw away
-# PerformanceRating - throw away
-# RelationshipSatisfaction - Throw away
-# StandardHours - throw away
-# StockOptionLevel - throw away
-# TotalWorkingYears - High potential
-# TrainingTimesLastYear - Throw away
-# WorkLifeBalance - Throw away
-# YearsAtCompany - slight potential
-# YearsInCurrentRole  - throw away
-# YearsSinceLastPromotion - throw away
-# YearsWithCurrManager - throw away
-
-
-```
-
-
 
 #EDA CHUNK
 ```{r}
-
-# To examine the distribution of a CATEGORICAL variable, use a bar chart
-# You can compute these values manually with dplyr::count()
-# To examine the distribution of a continuous variable, use a histogram:
-# You can compute this by hand by combining dplyr::count() and ggplot2::cut_width():
-# Look at overtime and numberofcompanies worked.. there may be a trend there.Why is the average lower for one versus the other.
-# Look at the YearswithcurrentManager and YearsatCompany.. something there
-# Yearswithcurrentmanager and YearsSinceLastPromotion
-# Yearsincurrentrole and YearsSinceLastPromotion
-
-
-# employee_data %>% select(MonthlyIncome
-#   ,JobSatisfaction
-#   ,Age
-#   ,MaritalStatus          
-#   ,MonthlyRate
-#   ,NumCompaniesWorked
-#   ,Gender
-#   ,HourlyRate
-#   ,JobInvolvement          
-#   ,JobLevel                
-#   ,JobRole
-#   ,Education               
-#   ,EducationField          
-#   ,EmployeeCount           
-#   ,EmployeeNumber          
-#   ,EnvironmentSatisfaction ) %>%
-#   ggpairs(mapping = aes(color = Attrition))
-
-
-
-
-
-
-ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, y = MonthlyIncome, colour = Attrition)) +
-  geom_area()
-
 
 
 ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, colour = JobRole)) +
@@ -716,24 +834,4 @@ ggplot(data = employee_data, mapping = aes(x= EducationField, y = MonthlyRate, c
 
 ```
 
-
-
-
-# % Experimentation
-```{r}
-
-# library( data.table )
-# setDT( students )[ , 100 * .N / nrow( students ), by = gender ]
-# 
-# setDT(employee_data)[, 100* .N/nrow(employee_data), by = Attrition]
-# 
-# 
-# library( dplyr )
-# employee_data %>% 
-#     group_by( Attrition ) %>% 
-#     summarise( percent = 100 * n() / nrow( employee_data ) )
-# 
-# view(employee_data)
-
-```
 
