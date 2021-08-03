@@ -4,7 +4,7 @@ author: "Rayon M"
 date: "7/30/2021"
 output: html_document
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -549,7 +549,7 @@ for(seed in 1:100)
   TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
   Train = employee_data[TrainIndices,]
   Test = employee_data[-TrainIndices,]
-  model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
+  model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")], factor(Train$Attrition, labels=c("No", "Yes")), laplace = 1)
   CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")])))
   master_acc[seed] = CM$overall[1]
   master_sensitivity[seed] = CM$byClass[1]
@@ -562,6 +562,63 @@ mean(master_acc)
 mean(master_sensitivity)
 mean(master_specificivity)
 
+ model = naiveBayes(train[,c(1,2)],train$Species)
+  table(predict(model,test[,c(1,2)]),test$Species)
+  CM = confusionMatrix(table(predict(model,test[,c(1,2)]),test$Species))
+  masterAcc[j] = CM$overall[1]
+
+# The mean Accuracy is 0.8544061
+# The mean Sensitivity is 0.8688525
+# The mean Specificity is 0.6470588
+
+```
+
+
+```{r}
+
+# Find the average accuracy, sensitivity, and specificity of the model. The sensitivity and specificity must both be above 60%.
+# Redoing the model
+
+xmaster_acc = numeric(100)
+xmaster_sensitivity = numeric(100)
+xmaster_specificivity = numeric(100)
+xmaster_seed = numeric(100)
+
+
+for(seed in 1:100)
+{
+  set.seed(seed)
+  splitPerc = 0.70
+  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  Train = employee_data[TrainIndices,]
+  Test = employee_data[-TrainIndices,]
+  
+  model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")], Train$Attrition, laplace = 1)
+  CM = confusionMatrix(table(predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")],Test$Attrition)))
+  
+  xmaster_acc[seed] = CM$overall[1]
+  xmaster_sensitivity[seed] = CM$byClass[1]
+  xmaster_specificivity[seed] = CM$byClass[2]
+  xmaster_seed[seed] = seed
+}
+
+mean(xmaster_seed)
+mean(xmaster_acc)
+mean(xmaster_sensitivity)
+mean(xmaster_specificivity)
+
+# model = naiveBayes(iris[,c(1,2)],iris$Species,laplace = 1)
+# 
+# table(predict(model,iris[,c(1,2)]),iris$Species)
+# 
+# CM = confusionMatrix(table(predict(model,iris[,c(1,2)]),iris$Species))
+# 
+# CM
+# 
+#  model = naiveBayes(train[,c(1,2)],train$Species)
+#   table(predict(model,test[,c(1,2)]),test$Species)
+#   CM = confusionMatrix(table(predict(model,test[,c(1,2)]),test$Species))
+#   masterAcc[j] = CM$overall[1]
 
 # The mean Accuracy is 0.8544061
 # The mean Sensitivity is 0.8688525
@@ -571,6 +628,44 @@ mean(master_specificivity)
 
 ```{r}
 
+  splitPerc = 0.70
+  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  Train = employee_data[TrainIndices,]
+  Test = employee_data[-TrainIndices,]
+  
+  model_attrition_yesorno = naiveBayes(Train[,c(20,16,24)], factor(Train$Attrition, labels=c("No", "Yes")))
+  table(predict(model_attrition_yesorno, Test[,c(20,16,24)], factor(Train$Attrition, labels=c("No", "Yes"))))
+  CM = confusionMatrix(table(predict(model_attrition_yesorno,Test[,c(20,16,24)], factor(Train$Attrition, labels=c("No", "Yes")))))
+  
+  
+  Train$Attrition
+
+```
+
+
+
+
+
+
+
+```{r}
+# Final Model used for the Naive Bayes classification
+set.seed(5)
+
+splitPerc = 0.70
+TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+Train = employee_data[TrainIndices,]
+Test = employee_data[-TrainIndices,]
+
+model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
+CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")], type = "raw")))
+
+CM
+
+```
+
+
+```{r}
 set.seed(5)
 
 splitPerc = 0.70
@@ -581,7 +676,8 @@ Test = employee_data[-TrainIndices,]
 model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
 CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")])))
 
-CM  
+CM
+
 ```
 
 
@@ -597,9 +693,10 @@ comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doi
 
 comp_dataset$Attrition =  predict(model_attrition_yesorno,comp_dataset[,c("MonthlyIncome", "JobLevel", "OverTime")])
 
-view(comp_dataset)
+#view(comp_dataset)
 
 write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
+
 
 ```
 
