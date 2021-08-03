@@ -4,7 +4,7 @@ author: "Rayon M"
 date: "7/19/2021"
 output: html_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -125,8 +125,8 @@ employeeData %>% count(DistanceFromHome)
 
 
 
-ggplot(data = employeeData) +
-  geom_tile(mapping = aes(x = Department, y = BusinessTravel, fill = Attrition))
+  ggplot(data = employeeData) +
+    geom_tile(mapping = aes(x = Department, y = BusinessTravel, fill = Attrition))
 
 # People with technical Degrees in the Research and Sales department had attrition
 
@@ -453,12 +453,12 @@ tseed = numeric(100)
 for(seed in 1:100)
 {
   set.seed(seed)
-  splitPerc = 0.70
+  splitPerc = 0.10
   TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
   Train = employee_data[trainIndices,]
   Test = employee_data[-trainIndices,]
-  modelAttritionYorN = naiveBayes(Train[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
-  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(modelAttritionYorN,Test[,c("Age", "JobLevel", "MonthlyIncome", "OverTime")])))
+  modelAttritionYorN = naiveBayes(Train[,c("JobInvolvement", "JobLevel", "OverTime", "WorkLifeBalance")],factor(Train$Attrition, labels=c("No", "Yes")))
+  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(modelAttritionYorN,Test[,c("JobInvolvement", "JobLevel", "OverTime", "WorkLifeBalance")])))
   masterAcc[seed] = CM$overall[1]
   massterSensitivity[seed] = CM$byClass[1]
   massterSpecificivity[seed] = CM$byClass[2]
@@ -493,6 +493,39 @@ mean(massterSpecificivity)
 # 
 # view(CompDataset)
 
+
+```
+
+## Retesting with different Factors
+```{r}
+# Find the average accuracy, Sensitivity, and Specificity of the model
+
+masterAcc = numeric(100)
+massterSensitivity = numeric(100)
+massterSpecificivity = numeric(100)
+tseed = numeric(100)
+
+
+for(seed in 1:100)
+{
+  set.seed(seed)
+  splitPerc = 0.70
+  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  Train = employee_data[trainIndices,]
+  Test = employee_data[-trainIndices,]
+  modelAttritionYorN = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
+  CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(modelAttritionYorN,Test[,c("MonthlyIncome", "JobLevel", "OverTime")])))
+  masterAcc[seed] = CM$overall[1]
+  massterSensitivity[seed] = CM$byClass[1]
+  massterSpecificivity[seed] = CM$byClass[2]
+  tseed[seed] = seed
+}
+
+
+mean(tseed)
+mean(masterAcc)
+mean(massterSensitivity)
+mean(massterSpecificivity)
 
 ```
 
@@ -1376,6 +1409,15 @@ mean(master_acc)
 mean(master_sensitivity)
 mean(master_specificivity)
 
+CM
 
 ```
 
+
+ggplot(data = employee_data, mapping = aes(x= Attrition,  group = JobLevel)) +
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5) +
+    labs(y = "Percent", fill="workclass") +
+    facet_grid(~MonthlyIncome) +
+    scale_y_continuous(labels = scales::percent)+coord_flip()+theme(legend.position = "none")
