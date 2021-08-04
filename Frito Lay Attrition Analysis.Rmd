@@ -70,9 +70,9 @@ knitr::opts_chunk$set(echo = TRUE)
   *  YearsWithCurrManager
 
 
-```{r echo = FALSE}
+```{r include=FALSE}
 
-# Import the relevant packages  Libraries Used in the Study
+# Import the relevant packages and libraries used to perform the analysis.
 
 library(tidyverse)
 library(GGally)
@@ -90,7 +90,7 @@ library(scales)
 library(wesanderson)
 ```
 
-
+### *Import Data*
 ```{r echo = FALSE}
 # Read in the employee dataset that will be used in the Analysis.
 
@@ -99,16 +99,16 @@ employee_data = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Do
 ```
 
 ## **Exploratory Data Analysis (EDA)**
-###  Explore variables that can predict Attrition
-###  Look for patterns in the data
+###  Explore factors that can lead voluntary employee turnover (Attrition). Identify the top three factors that contribute to turnover.
+###  The business is also interested in learning about any job role specific trends that may exist in the data set. You can also provide any other interesting trends and observations from your analysis. 
 
 ```{r}
 # Look at the structure of the data
-str(employee_data)
+str(employee_data) # 870 observations and 36 variables
 
-# reveals top 6 observations in the data
+# display top 6 observations in the data
 head(employee_data)
-# 870 observations and 36 variables
+
 
 # view the variables in the dataset to determine if there are any "NAs" or missing values.
 gg_miss_var(employee_data)
@@ -121,21 +121,33 @@ gg_miss_var(employee_data)
 
 ```{r}
 
-attriton_split <- data.frame(employee_data %>% group_by(Attrition) %>% summarise(Count = n()))
-attriton_split
+attrition_split <- data.frame(employee_data %>% group_by(Attrition) %>% summarise(Count = n()))
+attrition_split
 
-# The variable "Attrition" contains 730 No and 140 Yes observations in the dataset.
+# The  "Attrition" variable contains 730 No and 140 Yes observations in the dataset.
 
 # Calculate the percentage difference of the No vs. Yes observations.
-# Use setDT from the data.table package to calculate the %
+# Use setDT from the data.table package to calculate the %.
 
-setDT (employee_data)[, 100* .N/ nrow(employee_data), by = Attrition]
+attrition_percent <- setDT (employee_data)[, 100 * .N/ nrow(employee_data), by = Attrition]
+
+attrition_percent$V1 = round(attrition_percent$V1)
+
+ggplot(data = attrition_percent, mapping = aes(x = Attrition, y = V1, fill = Attrition))+
+  geom_bar(stat = "identity") +
+  geom_text(aes(Attrition, V1-10, label = V1), data = attrition_percent)+
+  xlab("Attriton")+
+  ylab("Percentages")+
+  ggtitle("Attrition Distribution by percent")+
+  theme_tufte()+
+  theme(legend.position = "none")
+
+
+# Another option for displaying percentages
 BarChart(Attrition, fill = (count) , data = employee_data)
 
-#Plot(Attrition, data = employee_data)
-# The data is consist of 84% No and 16% Yes as it relates to Attrition
-# Attrition happens 16% of the time.
-
+# Summary:
+# The data consists of 84% No's and 16% Yes's as it pertains to Attrition.
 
 ```
 
@@ -144,20 +156,39 @@ BarChart(Attrition, fill = (count) , data = employee_data)
 ```{r}
 
 # Attrition vs. Overtime
-ggplotly( ggplot(data = employee_data) + 
+
+overtime_percent <- setDT (employee_data)[, 100 * .N/ nrow(employee_data), by = OverTime]
+
+overtime_percent$V1  <-  round(overtime_percent$V1)
+colnames(overtime_percent)[2] = "Percent"
+overtime_percent <-  data.frame(overtime_percent)
+overtime_percent$OverTime <- as.factor(overtime_percent$OverTime)
+
+overtime_percent
+
+# 29% of all employees work Overtime
+# 71% of all employees does not work Overtime
+
+ggplotly(ggplot(data = employee_data) + 
   geom_count(mapping = aes(x = Attrition, y = OverTime, colour = Attrition))+
-  theme_fivethirtyeight()
-)
+  theme_economist()+
+   theme(legend.position = "none")+
+  ggtitle("Attrition vs. OverTime"))
+
+# 57% of persons who left the company were working overtime! This will be one of the factors that leads to Attrition
+# Attrition was highest in the group of employees that worked overtime
+
+# ggplot(data = employee_data, mapping = aes(y = OverTime))+
+#   geom_bar()+
+#   geom_text(aes(OverTime, label = Percent, Percent = Percent + 1000000), data = overtime_percent)+
+#   coord_flip()+
+#   scale_y_discrete(expand = c(0, 0))+
+#   scale_x_discrete(expand = c(0, 0))
 
 
-ggplot(data = employee_data, mapping = aes(x = OverTime, fill = Attrition ),position = "dodge")+
-  geom_bar()
+BarChart(OverTime, by = Attrition , data = employee_data)
 
-
-employee_data %>% count(Attrition, OverTime)
-
-# 29% of all employees did Overtime
-# 71% of all employees did not do Overtime
+# Heat map showing that a large number of the employees don't work overtime.
 
 pal <- wes_palette("Zissou1", 100, type = "continuous")
 ggplotly(employee_data %>% 
@@ -168,23 +199,11 @@ ggplotly(employee_data %>%
   scale_x_discrete(expand = c(0, 0)) +
   scale_y_discrete(expand = c(0, 0)) + 
   coord_equal()+
-    ggtitle("")
-  )
-
-employee_data %>% count(Attrition,OverTime) %>%
-  mutate(prop = n / sum(n)) %>%
-  ggplot() +
-  geom_tile(mapping = aes(x = Attrition, y = OverTime, fill = Attrition)) +
-  labs(title = 'Distribution of cut within color')
+  theme_economist()+
+  ggtitle("Attrition vs. OverTime"))
 
 
-employee_data %>% count(Attrition,OverTime) %>%
-  ggplot() +
-  geom_tile(mapping = aes(x = Attrition, y = OverTime, fill = Attrition)) +
-  labs(title = 'Distribution of Attrition within OverTime')
-
-
-# 57% of persons who left the company were working overtime! This will be one of the factors that leads to Attrition
+mosaicplot(Attrition~OverTime, data = employee_data, col=c("darkslategray4", "orange"), main ="Attrition vs Overtime", xlab = "Attrition", ylab = "Overtime", border = "black", las=0.5, shade=TRUE)
 
 
 ```
@@ -236,7 +255,7 @@ attrition_department2 <-  employee_data %>%
   count(Attrition, Department)%>%
   ggplot(mapping = aes(x = Attrition,  y = Department)) +
   geom_tile(mapping = aes(fill = n))+
-    theme_economist()+
+  theme_economist()+
   ggtitle("Attrition vs. Department")
 
   ggplotly(attrition_department2)
@@ -247,7 +266,10 @@ attrition_department2 <-  employee_data %>%
     geom_bar(mapping = aes(x = Department, fill = OverTime, alpha = JobRole), position = "dodge") +
     ggtitle("Overtime by Department")+
     xlab("Department")+
-    ylab("Count"))
+    ylab("Number of Employees")+
+    theme_economist()+
+      theme(legend.position = "none")
+  )
 
 # No. There is a higher percentage of people working overtime in the Research and Development Department - 29%
   #65% of Overtime comes from the Research & Development Department
@@ -255,11 +277,9 @@ attrition_department2 <-  employee_data %>%
 
 PieChart(Department, data = employee_data, hole = 0)
 
-# The Research and Development Department makes up 65% of the company. Department is one of the Factors
-
+# The Research and Development Department makes up 65% of the company. Department is not one of the Factors that leads to Attrition.
 
 # What is the percentage of non-exempt people leaving the company versus full time?
-
 
 ```
 
@@ -299,7 +319,7 @@ employee_data %>% count(Attrition, Gender)
 # Attrition v. JobRole
 
 ggplotly(ggplot(data = employee_data) + 
-  geom_count(mapping = aes(x = Attrition, y = JobRole, colour = Attrition))+
+  geom_count(mapping = aes(x = Attrition, y = JobRole, color = OverTime))+
   theme_economist()+
   ggtitle("Attrition vs. JobRole"))
 
@@ -310,7 +330,16 @@ BarChart(JobRole, by=Department, data = employee_data)
 employee_data %>% ggplot(mapping = aes(x = JobRole, fill = Attrition))+
   geom_bar()
 
-(Attrititon_table <-  data.frame (employee_data %>% count(Attrition, JobRole)))
+Attrititon_table <- data.frame(employee_data %>% count(Attrition, JobRole))
+Attrititon_table
+
+ggplot(data = Attrititon_table, mapping = aes(x = JobRole, y = n))+
+  geom_boxplot()
+
+ggplot(data = employee_data, aes(x = JobRole, y= Attrition, color = Attrition))+
+  geom_count()+
+  coord_flip()
+
 
 ```
 
@@ -319,13 +348,41 @@ employee_data %>% ggplot(mapping = aes(x = JobRole, fill = Attrition))+
 # Attrition v. MaritalStatus
 
 ggplotly(ggplot(data = employee_data) + 
-  geom_count(mapping = aes(x = Attrition, y = MaritalStatus, colour = Attrition))+
+  geom_count(mapping = aes(x = Attrition, y = MaritalStatus, color = Attrition))+
   theme_economist()+
   ggtitle("Attrition vs. MaritalStatus"))
 
 employee_data %>% count(Attrition, MaritalStatus)
 
 # Higher Attrition count among Single people
+
+70+199
+70/269*100 # 26%
+
+70/140*100 #50%
+
+58+352
+58/410*100 # 14%
+
+58/140*100 # 41%
+
+12+179
+12/179*100 # 6%, 
+
+12/140*100 # 8 %
+
+
+ggplotly(ggplot(data = employee_data, mapping =  aes(x = OverTime, y = MaritalStatus, fill = Attrition))+
+  geom_count()+
+  coord_flip()
+)
+
+employee_maritalstatus <- employee_data[,c(3,19)]
+
+view(employee_data)
+
+mosaicplot(Attrition~MaritalStatus, data = employee_data, col=c("Blue", "red4", "Green"), main ="Attrition vs MaritalStatus", xlab = "Attrition", ylab = "MaritalStatus", las =1, border = "chocolate", shade = TRUE)
+
 
 
 ```
@@ -365,17 +422,28 @@ ggplot(data = employee_data, mapping = aes(x = YearsInCurrentRole, ..density..))
 ggplot(data = employee_data, mapping = aes(x = YearsInCurrentRole, y = YearsAtCompany)) +
   geom_point(position = "jitter")
 
+```
 
-# employee_data %>% select(YearsAtCompany, YearsInCurrentRole) %>% 
-#   ggpairs(mapping = aes(color = Attrition))
- 
 
+```{r}
+employee_data %>% 
+  select(Attrition, YearsAtCompany, YearsInCurrentRole) %>% 
+  ggpairs(mapping = aes(color = Attrition))
+
+```
+
+```{r}
 employee_data %>% 
   select (Attrition,TrainingTimesLastYear, WorkLifeBalance, YearsAtCompany, YearsInCurrentRole) %>%
   ggpairs(mapping = aes(color = Attrition))
 
 # Years At Company and Years In current Role has a high correlation of 0.776; however, that's normal, as you need to be in the company to change roles. And the longer you stay the more likely.
 
+
+```
+
+
+```{r}
 employee_data %>% 
   select (Attrition, RelationshipSatisfaction, StandardHours, StockOptionLevel, TotalWorkingYears) %>% 
   ggpairs(mapping = aes(color = Attrition))
@@ -386,6 +454,10 @@ employee_data %>%
 #Standard Hours is not a factor
 
 
+```
+
+
+```{r}
 employee_data %>%
  select(Attrition, PercentSalaryHike,PerformanceRating) %>%
   ggpairs(mapping = aes(color = Attrition))
@@ -438,11 +510,6 @@ ggplotly(employee_data %>% ggplot(mapping = aes(x = JobInvolvement, fill = Attri
 BarChart(JobLevel, fill = (count) , data = employee_data)
 ggplotly(employee_data %>% ggplot(mapping = aes(x = JobLevel, fill = Attrition))+
   geom_bar())
-
-```
-
-```{r}
-
 
 ```
 
@@ -509,8 +576,6 @@ employee_data %>%
   ggplot(mapping = aes(x = BusinessTravel, y = Department)) +
   geom_tile(mapping = aes(fill = n))
 
-
-
 ```
 
 ```{r}
@@ -536,89 +601,39 @@ employee_data %>% select(Attrition
 
 # Find the average accuracy, sensitivity, and specificity of the model. The sensitivity and specificity must both be above 60%.
 
-master_acc = numeric(100)
-master_sensitivity = numeric(100)
-master_specificivity = numeric(100)
-master_seed = numeric(100)
+master_acc <-  numeric(100)
+master_sensitivity  <-  numeric(100)
+master_specificivity <-  numeric(100)
+master_seed <-  numeric(100)
 
 
 for(seed in 1:100)
 {
   set.seed(seed)
-  splitPerc = 0.70
-  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
-  Train = employee_data[TrainIndices,]
-  Test = employee_data[-TrainIndices,]
-  model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")], factor(Train$Attrition, labels=c("No", "Yes")), laplace = 1)
+  splitPerc = 0.50
+  
+  Index = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  Train = employee_data[Index,]
+  Test = employee_data[-Index,]
+  
+  model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")], factor(Train$Attrition, labels=c("No", "Yes")))
   CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")])))
-  master_acc[seed] = CM$overall[1]
-  master_sensitivity[seed] = CM$byClass[1]
-  master_specificivity[seed] = CM$byClass[2]
-  master_seed[seed] = seed
+  
+  master_acc[seed] <-  CM$overall[1]
+  master_sensitivity[seed]  <-  CM$byClass[1]
+  master_specificivity[seed]  <-  CM$byClass[2]
+  master_seed[seed] <-  seed
 }
 
 mean(master_seed)
 mean(master_acc)
 mean(master_sensitivity)
-mean(master_specificivity)
+na.omit(max(master_specificivity))
 
- model = naiveBayes(train[,c(1,2)],train$Species)
-  table(predict(model,test[,c(1,2)]),test$Species)
-  CM = confusionMatrix(table(predict(model,test[,c(1,2)]),test$Species))
-  masterAcc[j] = CM$overall[1]
-
-# The mean Accuracy is 0.8544061
-# The mean Sensitivity is 0.8688525
-# The mean Specificity is 0.6470588
-
-```
-
-
-```{r}
-
-# Find the average accuracy, sensitivity, and specificity of the model. The sensitivity and specificity must both be above 60%.
-# Redoing the model
-
-xmaster_acc = numeric(100)
-xmaster_sensitivity = numeric(100)
-xmaster_specificivity = numeric(100)
-xmaster_seed = numeric(100)
-
-
-for(seed in 1:100)
-{
-  set.seed(seed)
-  splitPerc = 0.70
-  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
-  Train = employee_data[TrainIndices,]
-  Test = employee_data[-TrainIndices,]
-  
-  model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")], Train$Attrition, laplace = 1)
-  CM = confusionMatrix(table(predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")],Test$Attrition)))
-  
-  xmaster_acc[seed] = CM$overall[1]
-  xmaster_sensitivity[seed] = CM$byClass[1]
-  xmaster_specificivity[seed] = CM$byClass[2]
-  xmaster_seed[seed] = seed
-}
-
-mean(xmaster_seed)
-mean(xmaster_acc)
-mean(xmaster_sensitivity)
-mean(xmaster_specificivity)
-
-# model = naiveBayes(iris[,c(1,2)],iris$Species,laplace = 1)
-# 
-# table(predict(model,iris[,c(1,2)]),iris$Species)
-# 
-# CM = confusionMatrix(table(predict(model,iris[,c(1,2)]),iris$Species))
-# 
-# CM
-# 
-#  model = naiveBayes(train[,c(1,2)],train$Species)
-#   table(predict(model,test[,c(1,2)]),test$Species)
-#   CM = confusionMatrix(table(predict(model,test[,c(1,2)]),test$Species))
-#   masterAcc[j] = CM$overall[1]
+ # model = naiveBayes(train[,c(1,2)],train$Species)
+ #  table(predict(model,test[,c(1,2)]),test$Species)
+ #  CM = confusionMatrix(table(predict(model,test[,c(1,2)]),test$Species))
+ #  masterAcc[j] = CM$overall[1]
 
 # The mean Accuracy is 0.8544061
 # The mean Sensitivity is 0.8688525
@@ -626,46 +641,12 @@ mean(xmaster_specificivity)
 
 ```
 
-```{r}
 
-  splitPerc = 0.70
-  TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
-  Train = employee_data[TrainIndices,]
-  Test = employee_data[-TrainIndices,]
-  
-  model_attrition_yesorno = naiveBayes(Train[,c(20,16,24)], factor(Train$Attrition, labels=c("No", "Yes")))
-  table(predict(model_attrition_yesorno, Test[,c(20,16,24)], factor(Train$Attrition, labels=c("No", "Yes"))))
-  CM = confusionMatrix(table(predict(model_attrition_yesorno,Test[,c(20,16,24)], factor(Train$Attrition, labels=c("No", "Yes")))))
-  
-  
-  Train$Attrition
-
-```
-
-
-
-
-
-
-
-```{r}
+# Naive Bayes Model
 # Final Model used for the Naive Bayes classification
-set.seed(5)
 
-splitPerc = 0.70
-TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
-Train = employee_data[TrainIndices,]
-Test = employee_data[-TrainIndices,]
+```{r echo=FALSE}
 
-model_attrition_yesorno = naiveBayes(Train[,c("MonthlyIncome", "JobLevel", "OverTime")],factor(Train$Attrition, labels=c("No", "Yes")))
-CM = confusionMatrix(table(factor(Test$Attrition, labels = c("No", "Yes")), predict(model_attrition_yesorno,Test[,c("MonthlyIncome", "JobLevel", "OverTime")], type = "raw")))
-
-CM
-
-```
-
-
-```{r}
 set.seed(5)
 
 splitPerc = 0.70
@@ -681,22 +662,22 @@ CM
 ```
 
 
-
 ## Competition dataset with No Attrition. Use the Naive Bayes Model to predict Attrition.
 
 ```{r echo = FALSE}
-#Load in the competition dataset
-comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Attrition.csv")
 
-#Use the Naive Bayes Classification Model to classify each observation as Yes or No to Attrition.
-# Model name = "model_attrition_yesorno"
+#Import the competition dataset
+comp_dataset <- read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Attrition.csv")
 
-comp_dataset$Attrition =  predict(model_attrition_yesorno,comp_dataset[,c("MonthlyIncome", "JobLevel", "OverTime")])
+# Use the NaiveBayes Classification Model to classify each observation as Yes or No to Attrition.
+# Model name: model_attrition_yesorno
+# Create a new variable, comp_dataset$PredAttrition to store the predicted values.
 
-#view(comp_dataset)
+comp_dataset$PredAttrition <- predict(model_attrition_yesorno,comp_dataset[,c("MonthlyIncome", "JobLevel", "OverTime")])
 
-write.csv(comp_dataset, "Case2PredictionsMorris Attrition.csv")
+# You must provide the labels (ordered by ID) in a csv file.
 
+write.csv(comp_dataset[,c(1,36)], "Case2PredictionsMorris Attrition.csv")
 
 ```
 
@@ -710,7 +691,6 @@ employee_data %>% select(MonthlyIncome, Age, Department, EducationField, JobLeve
 ggpairs()
 
 ```
-
 
 
 ## Regression Model to predict Monthly Income
@@ -737,7 +717,7 @@ for (i in 1:numMSPEs)
   
   
   #Model 4
-  monthly_income_model_fit4 = lm(MonthlyIncome ~ JobLevel, data = monthly_income_train)
+  monthly_income_model_fit4 = lm(MonthlyIncome ~ JobLevel+TotalWorkingYears, data = monthly_income_train)
   monthly_income_Pred_4 = predict(monthly_income_model_fit4, newdata = monthly_income_test)
   MSPE4 = mean((employee_data$MonthlyIncome - monthly_income_Pred_4)^2)
   MSPE4
@@ -770,7 +750,6 @@ testMSE5
 RMSE5 <- sqrt(testMSE5)
 RMSE5
 
-
 ```
 
 ## Competition dataset with No MonthlyIncome. Use the Linear Regression Model to predict Monthly Income.
@@ -783,43 +762,13 @@ monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing 
 #Use the Linear Regression Model to predict the MonthlyIncome for each observation.
 # Model name = "model_attrition_yesorno"
 
-monthly_income_comp_dataset$PredMonthlyIncome =  predict(monthly_income_model_fit4, monthly_income_comp_dataset)
+monthly_income_comp_dataset$PredMonthlyIncome = predict(monthly_income_model_fit4, monthly_income_comp_dataset)
 
 
-write.csv(monthly_income_comp_dataset, "Case2PredictionsMorris Salary.csv")
-
-```
-
-
-
-# Summary of the Models
-
-```{r}
-
-
-# 
-# monthly_income_test %>% ggplot(aes(x = MonthlyIncome, y = TotalWorkingYears)) + 
-#   geom_point() +
-#   geom_line(data = monthly_income_test, aes( x = MonthlyIncome, y = monthly_income_Pred_6, col = "red"))
-# 
-# 
-# 
-# monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
-#   geom_point()+
-#   geom_smooth(method = "lm", se = FALSE)
-# 
-# monthly_income_test %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
-#   geom_point()+
-#   geom_line(colour = "red")+
-#   geom_smooth(method = "lm", se = FALSE)
-# 
-# 
-# monthly_income_test_mutate %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+ 
-#   geom_point()+
-#   geom_line(colour = "red")+
-#   geom_smooth(method = "lm", se = FALSE)
+write.csv(monthly_income_comp_dataset[,c(1,36)], "Case2PredictionsMorris Salary.csv")
 
 ```
+
 
 
 ```{r}
