@@ -12,6 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+[Frito Lay Presentation](https://web.microsoftstream.com/video/56add957-b794-4992-9d3c-cfe0aedcae4a)
+
+
 ## **Project Objectives**
 
   1.  Classify Attrition
@@ -70,7 +73,7 @@ knitr::opts_chunk$set(echo = TRUE)
   *  YearsWithCurrManager
 
 
-```{r include=FALSE}
+```{r Libraries, message=FALSE,warning=FALSE}
 
 # Import the relevant packages and libraries used to perform the analysis.
 
@@ -88,6 +91,9 @@ library(ggthemes)
 library(lessR)
 library(scales)
 library(wesanderson)
+# library(kableExtra)
+library(colorspace)
+
 ```
 
 ### *Import Data*
@@ -117,9 +123,9 @@ gg_miss_var(employee_data)
 
 ```
 
-# What trends exist within the data? What is the split between Attrition Yes and No?
+## *What trends exist within the data? What is the split between Attrition Yes and No?*
 
-```{r}
+```{r Attrition}
 
 attrition_split <- data.frame(employee_data %>% group_by(Attrition) %>% summarise(Count = n()))
 attrition_split
@@ -151,9 +157,9 @@ BarChart(Attrition, fill = (count) , data = employee_data)
 
 ```
 
-#  Find where Attrition is highest among the Categorical Variables
+##  *Find where Attrition is highest among the Categorical Variables*
 
-```{r}
+```{r OverTime Analysis, echo=FALSE, message=FALSE}
 
 # Attrition vs. Overtime
 
@@ -185,8 +191,9 @@ ggplotly(ggplot(data = employee_data) +
 #   scale_y_discrete(expand = c(0, 0))+
 #   scale_x_discrete(expand = c(0, 0))
 
-
 BarChart(OverTime, by = Attrition , data = employee_data)
+
+overtime_attrition <- BarChart(OverTime, by = Attrition , data = employee_data)
 
 # Heat map showing that a large number of the employees don't work overtime.
 
@@ -202,14 +209,57 @@ ggplotly(employee_data %>%
   theme_economist()+
   ggtitle("Attrition vs. OverTime"))
 
+# Mosaic Map to show differences
+subs_pal <- colorspace::qualitative_hcl(3, h = 80,c = 80, l = 60)
+mosaicplot(Attrition~OverTime, data = employee_data,col =subs_pal, main ="Attrition vs Overtime", xlab = "Attrition", ylab = "Overtime", size =2, border = "black", las = 0.10, dir = c("h", "v"), off = 3, cex.axis = 1)
 
-mosaicplot(Attrition~OverTime, data = employee_data, col=c("darkslategray4", "orange"), main ="Attrition vs Overtime", xlab = "Attrition", ylab = "Overtime", border = "black", las=0.5, shade=TRUE)
+
+
+ggplotly(ggplot(data = employee_data, mapping = aes(x = OverTime,  fill = Attrition))+
+  geom_bar(position = "dodge"))
+
+
+
+ggplotly(employee_data %>% filter(Attrition == "Yes") %>%
+ggplot(mapping = aes(x = Attrition, fill = OverTime))+
+  geom_bar()+
+  ggtitle("Attrition(Yes) by Overtime"))
+
+# 
+
+ggplot(employee_data, aes(x= Attrition,  group=OverTime)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5) +
+    labs(y = "Percent", fill="OverTime") +
+    facet_grid(~OverTime) +
+    scale_y_continuous(labels = scales::percent)+
+  theme_economist()
+  
+
+# 32% of employees working overtime voluntarily left the company.
+# 68% of employees of overtime employees remained with the company
+
+
+ggplot(employee_data, aes(x= OverTime,  group= Attrition)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5) +
+    labs(y = "Percent", fill="Attrition") +
+    facet_grid(~Attrition) +
+    scale_y_continuous(labels = scales::percent)+
+  theme_economist()+
+  ggtitle("Overtime seperated by Attrition")+
+  xlab("Overtime")+
+  ylab("Percent")
+
+# 57% of Attrition were from Overtime Employees.
 
 
 ```
 
 
-```{r}
+```{r warning=FALSE}
 # Attrition vs BusinessTravel
 attrition_businesstravel <- ggplot(data = employee_data) + 
   geom_count(mapping = aes(x = Attrition, y = BusinessTravel, colour = Attrition))+
@@ -315,7 +365,7 @@ employee_data %>% count(Attrition, Gender)
 ```
 
 
-```{r}
+```{r JobRole Analysis}
 # Attrition v. JobRole
 
 ggplotly(ggplot(data = employee_data) + 
@@ -330,21 +380,58 @@ BarChart(JobRole, by=Department, data = employee_data)
 employee_data %>% ggplot(mapping = aes(x = JobRole, fill = Attrition))+
   geom_bar()
 
-Attrititon_table <- data.frame(employee_data %>% count(Attrition, JobRole))
-Attrititon_table
+Attrition_table <- data.frame(employee_data %>% count(Attrition, JobRole))
+Attrition_table
 
-ggplot(data = Attrititon_table, mapping = aes(x = JobRole, y = n))+
+ggplot(data = Attrition_table, mapping = aes(x = JobRole, y = n))+
   geom_boxplot()
 
 ggplot(data = employee_data, aes(x = JobRole, y= Attrition, color = Attrition))+
   geom_count()+
   coord_flip()
 
+# Count of employees within JobLevel
+ggplot(data = Attrition_table, mapping = aes(x = JobRole, y = n, fill = Attrition))+
+  geom_bar(stat = "identity")+
+   geom_text(aes(JobRole, n, label = n), position = position_stack (vjust = .5), col = "red4")
 
+# Displays the % of turnover within each JobLevel
+ggplotly(employee_data %>% group_by(Attrition, JobRole)%>%
+  tally %>% 
+  mutate(percent =round(n/sum(n)*100))%>%
+  ggplot(aes(x = JobRole, y = percent, fill = Attrition))+
+  geom_bar(stat = "identity")+
+  geom_text(aes(JobRole, percent, label = paste0(sprintf("%.0f", percent),"%")), position = position_stack (vjust = .5), col = "black")+
+  xlab("Job Role") + ylab("Percent")+
+  ggtitle("Job Role by Attrition"))
+
+# The Sales Executive JobRole had the highest Turnover
+
+BarChart(JobRole, by=OverTime, data = employee_data)
+
+
+ggplotly(employee_data %>% group_by(OverTime, JobRole)%>%
+  tally %>% 
+  mutate(percent =round(n/sum(n)*100))%>%
+  ggplot(aes(x = JobRole, y = percent, fill = OverTime))+
+  geom_bar(stat = "identity")+
+  geom_text(aes(JobRole, percent, label = paste0(sprintf("%.0f", percent),"%")), position = position_stack (vjust = .5), col = "black")+
+  xlab("Job Role") + ylab("Percent")+
+  ggtitle("Job Role by OverTime"))
+
+# Research Scientist Job Role had the most OverTime at 26%
+
+ggplotly(employee_data %>% group_by(OverTime, JobRole)%>%
+  ggplot(aes(x= JobRole,  fill = OverTime))+
+    geom_bar())
+
+employee_data %>% count(OverTime, JobRole)
+  
 ```
 
 
-```{r}
+
+```{r MaritalStatus Analysis, echo=FALSE}
 # Attrition v. MaritalStatus
 
 ggplotly(ggplot(data = employee_data) + 
@@ -355,36 +442,33 @@ ggplotly(ggplot(data = employee_data) +
 employee_data %>% count(Attrition, MaritalStatus)
 
 # Higher Attrition count among Single people
+# 50% of Attrition was attributed to Single Persons
 
+# Single
 70+199
 70/269*100 # 26%
-
 70/140*100 #50%
 
+# Married
 58+352
 58/410*100 # 14%
-
 58/140*100 # 41%
 
+# Divorced
 12+179
 12/179*100 # 6%, 
-
 12/140*100 # 8 %
 
 
 ggplotly(ggplot(data = employee_data, mapping =  aes(x = OverTime, y = MaritalStatus, fill = Attrition))+
   geom_count()+
-  coord_flip()
-)
+  coord_flip())
 
-employee_maritalstatus <- employee_data[,c(3,19)]
+s_pal <- colorspace::qualitative_hcl(3, h = 70, c = 40, l = 50)
+  mosaicplot(Attrition~MaritalStatus, data = employee_data,col = s_pal, main ="Attrition vs Marital Status", xlab = "Attrition", ylab = "Marital Status", size =2, border = "black", las = 0.10,  off = 3, cex.axis = 1)
 
-view(employee_data)
-
-mosaicplot(Attrition~MaritalStatus, data = employee_data, col=c("Blue", "red4", "Green"), main ="Attrition vs MaritalStatus", xlab = "Attrition", ylab = "MaritalStatus", las =1, border = "chocolate", shade = TRUE)
-
-
-
+# Graph showing that Single employees were the highest group to voluntarily leave the company.
+  
 ```
 
 
@@ -464,9 +548,8 @@ employee_data %>%
 
 #High correlation between Percent Salary Hike and Performance Rating. Interesting. Employees only provided a rating of 3 or 4. Why?
 
-employee_data %>% select( Attrition,
-  JobSatisfaction
-  ,Age
+employee_data %>% select( Attrition, JobSatisfaction
+ ,Age
  ,MonthlyIncome           
  ,MonthlyRate
  ,NumCompaniesWorked) %>%
@@ -478,6 +561,13 @@ employee_data %>% select( Attrition,
 # Age is not a factor for Attrition. There were more people within the same age groups that stayed with the company.
 # Histogram of Age vs Attriton will prove this.
 # Not enough evidence to suggest that JobSatisfaction is a factor for attrition.
+
+```
+
+
+
+
+```{r}
 
 employee_data %>% select(
   Attrition
@@ -504,12 +594,44 @@ ggplotly(employee_data %>% ggplot(mapping = aes(x = JobInvolvement, fill = Attri
 ```
 
 
-```{r}
-# JobLevel is a factor for Attrition. As Job level increases, Attrition decreases. More Attrition occurred with folks at the lowest job level.
+```{r Monthly Income Analysis}
+
+ggplot(data = employee_data, mapping =aes(x = MonthlyIncome, y= Attrition, fill = Attrition))+
+  geom_boxplot()+
+  coord_flip()+
+  theme_economist()+
+  xlab("Attriton")+ ylab("Monthly Income")+
+  ggtitle("Attrition vs Monthly Income")
+
+# The median MonthlyIncome of Attrition was lower than current employees.
+# The median MonthlyIncome was was lower than the $5000
+# Monthly Income is a factor for Attrition
+
+
+```
+
+
+```{r Job Level Analysis, echo=FALSE}
+
+ggplotly(employee_data %>% ggplot(mapping = aes(x = JobLevel, fill = Attrition))+
+  geom_bar()+
+     ggtitle("Attrition vs Job Level")+
+    xlab("Job Levels")+
+    ylab("Number of Employees")+
+    theme_economist()
+)
+
+# JobLevel is a factor for Attrition. As Joblevel increases, Attrition decreases. Attrition occurred most at the lowest Joblevel.
+
+joblevel_percent <- setDT (employee_data)[, 100 * .N/ nrow(employee_data), by = JobLevel]
+joblevel_percent$V1  <-  round(joblevel_percent$V1)
+colnames(joblevel_percent)[2] = "Percent"
+joblevel_percent
 
 BarChart(JobLevel, fill = (count) , data = employee_data)
-ggplotly(employee_data %>% ggplot(mapping = aes(x = JobLevel, fill = Attrition))+
-  geom_bar())
+
+# 38% of the workforce is a Job Level 1. The Recommendation would be to assess your strong employees and Promote them as quickly as possible.
+
 
 ```
 
@@ -558,7 +680,10 @@ employee_data %>% select(
 
 ```{r}
 ggplot(employee_data, mapping = aes(x=BusinessTravel)) +
-  geom_bar(mapping =aes(color = Attrition), position = "dodge")
+  geom_bar(mapping =aes(fill = Attrition), position = "dodge") +
+  ggtitle("Attrition vs Business Travel")+
+  xlab("Business Travel") +ylab("Employee Count")+
+  theme_economist()
 
 #Non-Travel, Travel_Frequently, Travel_rarely
 
@@ -592,14 +717,13 @@ employee_data %>% select(Attrition
 
 ```
 
-
-
 # **Classification Model**
 ## Naive Bayes
 
 ```{r}
 
 # Find the average accuracy, sensitivity, and specificity of the model. The sensitivity and specificity must both be above 60%.
+# Loop to find the best seed to use for the Model.
 
 master_acc <-  numeric(100)
 master_sensitivity  <-  numeric(100)
@@ -628,16 +752,9 @@ for(seed in 1:100)
 mean(master_seed)
 mean(master_acc)
 mean(master_sensitivity)
-na.omit(max(master_specificivity))
+mean(master_specificivity) 
 
- # model = naiveBayes(train[,c(1,2)],train$Species)
- #  table(predict(model,test[,c(1,2)]),test$Species)
- #  CM = confusionMatrix(table(predict(model,test[,c(1,2)]),test$Species))
- #  masterAcc[j] = CM$overall[1]
-
-# The mean Accuracy is 0.8544061
-# The mean Sensitivity is 0.8688525
-# The mean Specificity is 0.6470588
+# Mean Specificity was turning out to be NA. That's because as the for loop cycled through there were moments when the model did not find Specificity. 
 
 ```
 
@@ -684,7 +801,7 @@ write.csv(comp_dataset[,c(1,36)], "Case2PredictionsMorris Attrition.csv")
 
 ## Exploratory Data Analysis for Regression Model
 
-```{r}
+```{r Monthly Income Analysis 1, message=FALSE, warning=FALSE}
 # Plot the following variables to see the correlation with MonthlyIncome
 
 employee_data %>% select(MonthlyIncome, Age, Department, EducationField, JobLevel, JobRole, TotalWorkingYears, YearsAtCompany) %>%
@@ -693,97 +810,39 @@ ggpairs()
 ```
 
 
-## Regression Model to predict Monthly Income
 ```{r}
 
-# Goal: create a regression model that has an RMSE less than $3000
+# Plot Monthly Income vs Department
 
-# Dependent Variable: MonthlyIncome
-# Predictors/Experiment variable(s): Age and Total Working Years
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = Department)) +
+  geom_point() +
+  geom_smooth(method = "lm" , se = FALSE) +
+  ggtitle("Monthly Income vs. Department")
 
-
-numMSPEs = 1000
-
-MSPEHolderModel4 = numeric(numMSPEs)
-MSPEHolderModel5 = numeric(numMSPEs)
-MSPEHolderModel10 = numeric(numMSPEs)
-
-for (i in 1:numMSPEs)
-{
-  
-  index <- createDataPartition(employee_data$ID, p = .60, list = FALSE)
-  monthly_income_train <- employee_data[index, ]
-  monthly_income_test <- employee_data[-index, ]
-  
-  
-  #Model 4
-  monthly_income_model_fit4 = lm(MonthlyIncome ~ JobLevel+TotalWorkingYears, data = monthly_income_train)
-  monthly_income_Pred_4 = predict(monthly_income_model_fit4, newdata = monthly_income_test)
-  MSPE4 = mean((employee_data$MonthlyIncome - monthly_income_Pred_4)^2)
-  MSPE4
-  MSPEHolderModel4[i] = MSPE4
-  
-  #Model 5
-  monthly_income_model_fit5 = lm(MonthlyIncome ~ JobRole, data = monthly_income_train)
-  monthly_income_Pred_5 = predict(monthly_income_model_fit5, newdata = monthly_income_test)
-  MSPE5 = mean((employee_data$MonthlyIncome - monthly_income_Pred_5)^2)
-  MSPE5
-  MSPEHolderModel5[i] = MSPE5
-  
-}
-
-mean(MSPEHolderModel4)
-summary(monthly_income_model_fit4)
-confint(monthly_income_model_fit4)
-
-mean(MSPEHolderModel5)
-summary(monthly_income_model_fit5)
-confint(monthly_income_model_fit5)
-
-testMSE4 = mean((monthly_income_test$MonthlyIncome - monthly_income_Pred_4) ^ 2)
-testMSE4
-RMSE4 <- sqrt(testMSE4)
-RMSE4
-
-testMSE5 = mean((monthly_income_test$MonthlyIncome - monthly_income_Pred_5) ^ 2)
-testMSE5
-RMSE5 <- sqrt(testMSE5)
-RMSE5
-
-```
-
-## Competition dataset with No MonthlyIncome. Use the Linear Regression Model to predict Monthly Income.
-
-```{r}
-#Load in the competition dataset
-
-monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Salary.csv")
-
-#Use the Linear Regression Model to predict the MonthlyIncome for each observation.
-# Model name = "model_attrition_yesorno"
-
-monthly_income_comp_dataset$PredMonthlyIncome = predict(monthly_income_model_fit4, monthly_income_comp_dataset)
-
-
-write.csv(monthly_income_comp_dataset[,c(1,36)], "Case2PredictionsMorris Salary.csv")
+# cor.test(employee_data$MonthlyIncome, employee_data$Department)
 
 ```
 
 
+```{r Monthly Income vs Age}
+# Plot Monthly Income vs Age
+
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age)) +
+  geom_point() +
+  geom_smooth(method = "lm" , se = FALSE) +
+  ggtitle("Monthly vs. Age")
+
+cor.test(employee_data$MonthlyIncome, employee_data$Age) # Correlation is 0.4842883
+
+# Correlation is low with Monthly Income
+
+
+```
+
 
 ```{r}
-employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = Department))+
-  geom_point()+
-  geom_smooth(method = "lm" , se = FALSE)+
-  ggtitle("Total Years vs. MonthlyIncome")
-#cor.test(employee_data$MonthlyIncome, as.factor(employee_data$Department))
 
-
-employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = Age))+
-  geom_point()+
-  geom_smooth(method = "lm" , se = FALSE)+
-  ggtitle("Total Years vs. MonthlyIncome")
-
+# Plot Monthly Income vs EducationField
 
 employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = EducationField))+
   geom_point()+
@@ -791,44 +850,92 @@ employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = EducationField))+
   ggtitle("Total Years vs. MonthlyIncome")+
   coord_flip()
 
-employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobLevel))+
-  geom_point()+
-  geom_smooth(method = "lm" , se = FALSE)+
-  ggtitle("Total Years vs. MonthlyIncome")
-cor.test(employee_data$MonthlyIncome, employee_data$JobLevel)
 
+```
+
+
+```{r Monthly Income vs Job Role, warning=FALSE, message=FALSE}
+
+# Plot Monthly Income vs JobRole
 
 employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = JobRole))+
   geom_point()+
   geom_smooth(method = "lm" , se = FALSE)+
-  ggtitle("Total Years vs. MonthlyIncome")+
+  ggtitle("Job Role vs. MonthlyIncome")+
   coord_flip()
-
-str(employee_data)
-
-cor.test(employee_data$MonthlyIncome, employee_data$YearsAtCompany)
-
-employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = YearsAtCompany, position = "jitters"), position = "jitters")+
-  geom_point()+
-  geom_smooth(method = "lm" , se = FALSE)+
-  ggtitle("Total Years vs. MonthlyIncome")
-
-
-cor.test(employee_data$MonthlyIncome, employee_data$TotalWorkingYears)
-
-employee_data %>% ggplot(mapping = aes(x = TotalWorkingYears, y = MonthlyIncome))+
-  geom_point()+
-  geom_smooth(method = "lm" , se = FALSE)+
-  ggtitle("Total Years vs. MonthlyIncome")+
-  coord_flip()
-
-
 
 ```
 
 
 
-#EDA CHUNK
+```{r Monthly Income vs Years at Company, warning=FALSE, message=FALSE}
+
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = YearsAtCompany,position = "jitters"))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Years at Company vs. MonthlyIncome")+
+  theme_economist() +
+  coord_flip()
+
+cor.test(employee_data$MonthlyIncome, employee_data$YearsAtCompany)
+# Correlation between Monthly Income and Years at Company is 0.49
+
+```
+
+
+```{r Monthly Income vs Total Working Years, warning=FALSE, message=FALSE}
+
+# Plot Monthly Income vs Total Working Years
+employee_data %>% ggplot(mapping = aes(x = MonthlyIncome, y = TotalWorkingYears))+
+  geom_point(aes(position = "jitters"))+
+  geom_smooth(method = "lm" , se = FALSE)+
+  ggtitle("Total Working Years vs. MonthlyIncome")+
+  theme_economist()
+
+ggplot(data = employee_data, mapping =aes(x = TotalWorkingYears)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black") +
+  ggtitle("Histogram of Total Working Years") +
+  xlab("Total Working Years") + ylab("Employee Count")
+
+# Right Skewed Histogram with mode at 10 Years
+
+
+# Correlation Test between MonthlyIncome and Total Working Years 
+cor.test(employee_data$MonthlyIncome, employee_data$TotalWorkingYears) # 0.77 
+
+```
+
+
+```{r Job Level vs Monthly Income, warning=FALSE, message=FALSE}
+
+# Plot Job Level vs Monthly Income
+employee_data %>% ggplot(mapping = aes(x = JobLevel, y = MonthlyIncome))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  xlab("Total Working Years")+ ylab("Monthly Income")+
+  ggtitle("Total Years vs. Job Level")
+
+  
+# Correlation Test between MonthlyIncome and Job Level 
+cor.test(employee_data$MonthlyIncome, employee_data$JobLevel) # Correlation is 0.95
+
+employee_data %>% ggplot(mapping = aes(x = JobLevel, y = MonthlyIncome))+
+  geom_point()+
+  geom_smooth(method = "lm" , se = FALSE)+
+  xlab("Total Working Years")+ ylab("Monthly Income")+
+  ggtitle("Total Years vs. MonthlyIncome")
+
+
+ggplot(data = employee_data, mapping = aes(x=JobLevel)) +
+  geom_histogram()
+
+# Right skewed histogram. Fewer employees as the JobLevel increases.
+# Correlation is too high to use in the Model
+
+```
+
+
+# Experimentation
 ```{r}
 
 
@@ -841,20 +948,34 @@ ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, colour = JobRole))
 
 # Research Scientist are the highest among those making less than $5,000. They start out a little higher than other roles. but only less than 5 are making over $10,000 
 ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, colour = JobRole)) +
-  geom_freqpoly()
+  geom_freqpoly() +
+  theme_economist() +
+  xlab("Monthly Income") + ylab("Employee Count") +
+  ggtitle("Distribution of Monthly Income")
  
-employee_data %>% group_by(JobRole) %>% count(MonthlyIncome)
 
 # Monthly Income
 ggplot(data = employee_data, mapping = aes(x= JobRole, y = MonthlyIncome, color = Attrition))+
-  geom_boxplot()
+  geom_boxplot() +
+  ggtitle("Job Role vs Monthly Income") +
+  xlab("Job Role")+
+  ylab("Monthly Income")+
+  theme_economist()
 
 #How does overtime affect this? 
 ggplot(data = employee_data, mapping = aes(x= JobRole, y = MonthlyIncome, color = OverTime))+
   geom_boxplot()
 
+
 #How many people get overtime by jobrole? Only 65 research scientist gets overtime.
-employee_data %>% group_by(JobRole) %>% count(OverTime)
+employee_data %>% group_by(JobRole) %>% summarise(count = n()) %>%
+  ggplot(mapping = aes(x = JobRole, y = count, fill = JobRole)) +
+  geom_bar(stat = "identity", color = "black", width = 0.5) +
+  geom_text(aes(x = JobRole, label = count, vjust = -.5))+
+  theme_economist_white()+
+  xlab("Job Role") + ylab("Employee Count")+
+  ggtitle("Distribution of Job Role")+
+  theme(legend.position = "none")
 
 
 # What does this look like for the daily rate?
@@ -877,6 +998,92 @@ ggplot(data = employee_data, mapping = aes(x = MonthlyIncome, colour = Attrition
 ggplot(data = )
 ggplot(data = employee_data, mapping = aes(x= EducationField, y = MonthlyRate, color = Attrition))+
   geom_boxplot()
+
+```
+
+
+## *Regression Model to predict Monthly Income* 
+```{r, warning=FALSE, message=FALSE}
+
+# Goal: create a regression model that has an RMSE less than 3000.
+# Dependent Variable: MonthlyIncome
+# Predictors/Experiment variable(s): Age and JobLevel
+
+set.seed(126)
+
+numMSPEs = 1000
+
+MSPEHolderModel4 = numeric(numMSPEs)
+MSPEHolderModel5 = numeric(numMSPEs)
+MSPEHolderModel10 = numeric(numMSPEs)
+
+for (i in 1:numMSPEs)
+{
+  
+  index <- createDataPartition(employee_data$ID, p = .70, list = FALSE)
+  monthly_income_train <- employee_data[index, ]
+  monthly_income_test <- employee_data[-index, ]
+  
+  
+  #Model 4
+  monthly_income_model_fit4 = lm(MonthlyIncome ~ Age+JobLevel, data = monthly_income_train)
+  monthly_income_Pred_4 = predict(monthly_income_model_fit4, newdata = monthly_income_test)
+  MSPE4 = mean((employee_data$MonthlyIncome - monthly_income_Pred_4)^2)
+  MSPE4
+  MSPEHolderModel4[i] = MSPE4
+  
+  #Model 5
+  monthly_income_model_fit5 = lm(MonthlyIncome ~ JobRole, data = monthly_income_train)
+  monthly_income_Pred_5 = predict(monthly_income_model_fit5, newdata = monthly_income_test)
+  MSPE5 = mean((employee_data$MonthlyIncome - monthly_income_Pred_5)^2)
+  MSPE5
+  MSPEHolderModel5[i] = MSPE5
+  
+}
+
+# Model 4 Statistics
+mean(MSPEHolderModel4)
+summary(monthly_income_model_fit4)
+confint(monthly_income_model_fit4)
+
+# Model 4 RMSE 
+testMSE4 = mean((monthly_income_test$MonthlyIncome - monthly_income_Pred_4) ^ 2)
+testMSE4
+RMSE4 <- sqrt(testMSE4)
+RMSE4
+
+# Model 5 Statistics
+mean(MSPEHolderModel5)
+summary(monthly_income_model_fit5)
+confint(monthly_income_model_fit5)
+
+# Model 5 RMSE
+testMSE5 = mean((monthly_income_test$MonthlyIncome - monthly_income_Pred_5) ^ 2)
+testMSE5
+RMSE5 <- sqrt(testMSE5)
+RMSE5
+
+# Model 4 had the lowest RMSE of 1348.37
+# Model 5 RMSE was 2065.96
+
+```
+
+## *Competition dataset with No MonthlyIncome. Use the best Linear Regression Model to predict Monthly Income.*
+
+```{r}
+
+#Load in the competition dataset
+
+monthly_income_comp_dataset = read.csv("C:/Users/Rayon/OneDrive/Documents/Doing DataScience/Doing Data Science/MSDS_6306_Doing-Data-Science/Unit 14 and 15 Case Study 2/CaseStudy2CompSet No Salary.csv")
+
+#Use the Linear Regression Model to predict the MonthlyIncome for each observation.
+# Model name = "model_attrition_yesorno"
+
+monthly_income_comp_dataset$PredMonthlyIncome = predict(monthly_income_model_fit4, monthly_income_comp_dataset)
+
+# Write the predicted variables to a file named:"Case2PredictionsMorris Salary.csv"
+
+write.csv(monthly_income_comp_dataset[,c(1,36)], "Case2PredictionsMorris Salary.csv")
 
 ```
 

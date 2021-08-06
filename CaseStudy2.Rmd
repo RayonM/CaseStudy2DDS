@@ -184,7 +184,7 @@ employeeData %>% select (WorkLifeBalance, YearsAtCompany, YearsInCurrentRole, Ye
 ```{r}
 ##STANDARDIZE YOUR VARIABLES!!!
 
-employeeDataZ = data.frame(AgeZ = scale(employeeData$Age), DistanceFromHomeZ = scale(employeeData$DistanceFromHome), JoblevelZ = scale(employeeData$JobLevel), MonthlyIncomeZ = scale(employeeData$MonthlyIncome), NumCompaniesWoredZ = scale(employeeData$NumCompaniesWorked), StockOptionLevelZ = scale(employeeData$StockOptionLevel), TrainingTimesLastYearZ = scale(employeeData$TrainingTimesLastYear), YearsAtCompanyZ = scale(employeeData$YearsAtCompany), YearsInCurrentRoleZ = scale(employeeData$YearsInCurrentRole), YearsWithCurrentManager = scale(employeeData$YearsWithCurrManager), Attrition = employeeData$Attrition)
+employeeDataZ = data.frame(AgeZ = scale(employee_data$Age), DistanceFromHomeZ = scale(employee_data$DistanceFromHome), JoblevelZ = scale(employee_data$JobLevel), MonthlyIncomeZ = scale(employee_data$MonthlyIncome), NumCompaniesWoredZ = scale(employee_data$NumCompaniesWorked), StockOptionLevelZ = scale(employee_data$StockOptionLevel), TrainingTimesLastYearZ = scale(employee_data$TrainingTimesLastYear), YearsAtCompanyZ = scale(employee_data$YearsAtCompany), YearsInCurrentRoleZ = scale(employee_data$YearsInCurrentRole), YearsWithCurrentManager = scale(employee_data$YearsWithCurrManager), Attrition = employee_data$Attrition, OverTimeZ = employee_data$OverTime)
 
 dim(employeeDataZ)
 
@@ -200,8 +200,11 @@ trainIndices = sample(1:dim(employeeDataZ)[1],round(splitPerc * dim(employeeData
 train = employeeDataZ[trainIndices,]
 test = employeeDataZ[-trainIndices,]
 
+# classifications = knn(train[,c("MonthlyIncomeZ", "JoblevelZ", "OverTimeZ")],test[,c("MonthlyIncomeZ", "JoblevelZ", "OverTimeZ")],train$Attrition, prob = TRUE, k = 12)
+# table(test$Attrition,classifications)
+# confusionMatrix(table(test$Attrition,classifications))
 
-classifications = knn(train[,c(1,2,3,4,5,6,7,8,9,10)],test[,c(1,2,3,4,5,6,7,8,9,10)],train$Attrition, prob = TRUE, k = 12)
+classifications = knn(train[,c(1,2,3,4,5,6,7,8,9,10)],test[,c(1, 2,3,4,5,6,7,8,9,10)],train$Attrition, prob = TRUE, k = 12)
 table(test$Attrition,classifications)
 confusionMatrix(table(test$Attrition,classifications))
 
@@ -218,8 +221,8 @@ confusionMatrix(table(test$Attrition,classifications))
 # table(test$Attrition,classifications)
 # confusionMatrix(table(test$Attrition,classifications))
 
-# classifications = knn.cv(employeeData[,c(36,35,34,33,30,25,20)],employeeData$Attrition, k = 5)
-# confusionMatrix(employeeData$Attrition,classifications)
+# classifications = knn.cv(employee_data[,c(36,35,34,33,30,25,20)],employee_data$Attrition, k = 5)
+# confusionMatrix(employee_data$Attrition,classifications)
 
 
 #knn(train[,c(2,16,24)],test[,c(2,16,24)],train$Attrition, prob = TRUE, k = 3)]
@@ -233,23 +236,25 @@ confusionMatrix(table(test$Attrition,classifications))
 #Internal CV/ Leave One Out
 
 ```{r}
-classifications = knn.cv(employeeData[,c(2,7,16,20,22,29,31,33,34,36)],employeeData$Attrition, prob = TRUE, k = 20)
-table(employeeData$Attrition,classifications)
-confusionMatrix(table(employeeData$Attrition,classifications))
+classifications = knn.cv(employee_data[,c(2,7,16,20,22,29,31,33,34,36)],employee_data$Attrition, prob = TRUE, k = 20)
+table(employee_data$Attrition,classifications)
+confusionMatrix(table(employee_data$Attrition,classifications))
 
 
-# classifications = knn.cv(employeeData[,c(36,35,34,33,30,25,20,2,7)],employeeData$Attrition, prob = TRUE, k = 20)
-# table(employeeData$Attrition,classifications)
-# confusionMatrix(table(employeeData$Attrition,classifications))
+# classifications = knn.cv(employee_data[,c(36,35,34,33,30,25,20,2,7)],employee_data$Attrition, prob = TRUE, k = 20)
+# table(employee_data$Attrition,classifications)
+# confusionMatrix(table(employee_data$Attrition,classifications))
 
 
-# classifications = knn.cv(employeeData[,c("JobInvolvement","WorkLifeBalance","Age",  "JobLevel")], employeeData$Attrition, prob = TRUE, k = 15)
-# table(employeeData$Attrition,classifications)
-# confusionMatrix(table(employeeData$Attrition,classifications))
+# classifications = knn.cv(employee_data[,c("JobInvolvement","WorkLifeBalance","Age",  "JobLevel")], employee_data$Attrition, prob = TRUE, k = 15)
+# table(employee_data$Attrition,classifications)
+# confusionMatrix(table(employee_data$Attrition,classifications))
 
 classifications = knn.cv(employeeDataZ[,c(1,2,3,4,5,6,7,8,9,10)],employeeDataZ$Attrition, prob = TRUE, k = 12)
 table(employeeDataZ$Attrition,classifications)
 confusionMatrix(table(employeeDataZ$Attrition,classifications))
+
+employeeDataZ
 
 
 ```
@@ -268,9 +273,9 @@ splitPerc = 0.70
 for(j in 1:iterations)
 {
   accs = data.frame(accuracy = numeric(30), k = numeric(30))
-  # trainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
-  # train = employeeData[trainIndices,]
-  # test = employeeData[-trainIndices,]
+  # trainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  # train = employee_data[trainIndices,]
+  # test = employee_data[-trainIndices,]
   trainIndices = sample(1:dim(employeeDataZ)[1],round(splitPerc * dim(employeeDataZ)[1]))
   train = employeeDataZ[trainIndices,]
   test = employeeDataZ[-trainIndices,]
@@ -330,9 +335,9 @@ splitPerc = 0.70
 for(j in 1:iterations)
 {
   accs = data.frame(accuracy = numeric(30), k = numeric(30))
-  trainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
-  train = employeeData[trainIndices,]
-  test = employeeData[-trainIndices,]
+  trainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+  train = employee_data[trainIndices,]
+  test = employee_data[-trainIndices,]
 for(i in 1:numks) 
   
 {
@@ -376,9 +381,9 @@ plot(seq(1,numks, 1),MeanAcc, type = "l")
 #set.seed (0)
 splitPerc = 0.70
 
-TrainIndices = sample(1:dim(employeeData)[1],round(splitPerc * dim(employeeData)[1]))
-Train = employeeData[trainIndices,]
-Test = employeeData[-trainIndices,]
+TrainIndices = sample(1:dim(employee_data)[1],round(splitPerc * dim(employee_data)[1]))
+Train = employee_data[trainIndices,]
+Test = employee_data[-trainIndices,]
 
 # model = naiveBayes(train[,c(2,7,16,20,22,29,31,33,34,36)],train$Attrition)
 # table(predict(model,test[,c(2,7,16,20,22,29,31,33,34,36)]),test$Attrition)
@@ -427,9 +432,9 @@ CM
 #Conclusion: My Explanatory Variables/Features are: Age, JobLevel, Monthly Income, and Overtime!
 
 
-model1 = naiveBayes(employeeData$Attrition~., data = employeeData)
+model1 = naiveBayes(employee_data$Attrition~., data = employee_data)
 
-AB = confusionMatrix(table(employeeData$Attrition, predict(model1, employeeData)))
+AB = confusionMatrix(table(employee_data$Attrition, predict(model1, employee_data)))
 
 AB
 
